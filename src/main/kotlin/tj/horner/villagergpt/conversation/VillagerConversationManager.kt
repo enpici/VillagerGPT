@@ -3,6 +3,7 @@ package tj.horner.villagergpt.conversation
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
 import tj.horner.villagergpt.VillagerGPT
+import kotlinx.coroutines.runBlocking
 import tj.horner.villagergpt.events.VillagerConversationEndEvent
 import tj.horner.villagergpt.events.VillagerConversationStartEvent
 import com.aallam.openai.api.BetaOpenAI
@@ -67,7 +68,9 @@ class VillagerConversationManager(private val plugin: VillagerGPT) {
     private fun endConversations(conversationsToEnd: Collection<VillagerConversation>) {
         conversationsToEnd.forEach {
             val history = it.messages.drop(1)
-            plugin.memory.appendMessages(it.villager.uniqueId, history, plugin.config.getInt("max-stored-messages", 20))
+            runBlocking {
+                plugin.memory.appendMessages(it.villager.uniqueId, history, plugin.config.getInt("max-stored-messages", 20))
+            }
             it.ended = true
             val endEvent = VillagerConversationEndEvent(it.player, it.villager)
             plugin.server.pluginManager.callEvent(endEvent)

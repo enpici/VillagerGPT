@@ -3,6 +3,8 @@ package tj.horner.villagergpt.memory
 import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.sql.Connection
 import java.sql.DriverManager
 import java.util.UUID
@@ -38,7 +40,7 @@ class ConversationMemory(dbFile: String) {
         }
     }
 
-    fun loadMessages(uuid: UUID, limit: Int): List<ChatMessage> {
+    suspend fun loadMessages(uuid: UUID, limit: Int): List<ChatMessage> = withContext(Dispatchers.IO) {
         val rows = mutableListOf<Pair<String, String>>()
         connection.prepareStatement("SELECT role, content FROM messages WHERE villager_uuid=? ORDER BY id DESC LIMIT ?").use { ps ->
             ps.setString(1, uuid.toString())
@@ -54,11 +56,11 @@ class ConversationMemory(dbFile: String) {
             val (role, content) = rows[i]
             messages.add(ChatMessage(role = ChatRole(role), content = content))
         }
-        return messages
+        messages
     }
 
-    fun appendMessages(uuid: UUID, messages: List<ChatMessage>, maxMessages: Int) {
-        if (messages.isEmpty()) return
+    suspend fun appendMessages(uuid: UUID, messages: List<ChatMessage>, maxMessages: Int) = withContext(Dispatchers.IO) {
+        if (messages.isEmpty()) return@withContext
         connection.prepareStatement("INSERT INTO messages (villager_uuid, role, content) VALUES (?, ?, ?)").use { ps ->
             for (msg in messages) {
                 ps.setString(1, uuid.toString())
