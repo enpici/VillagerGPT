@@ -13,7 +13,7 @@ class GossipManager(private val plugin: VillagerGPT) : BukkitRunnable() {
         val gossipLimit = plugin.config.getInt("gossip.max-entries", 30)
 
         plugin.server.worlds.forEach { world ->
-            val villagers = world.getEntitiesByClass(Villager::class.java)
+            val villagers = world.getEntitiesByClass(Villager::class.java).toList()
             for (i in villagers.indices) {
                 val villagerA = villagers[i]
                 for (j in i + 1 until villagers.size) {

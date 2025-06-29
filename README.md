@@ -74,6 +74,9 @@ VillagerGPT keeps a history of each villager's conversations in a small SQLite
 database. The location of this database and how many messages are stored can be
 changed in `config.yml` under the `memory` section.
 
+The maximum messages remembered per villager are configured with the
+`memory.max-messages` option.
+
 ### Gossip
 
 Villagers remember interesting pieces of gossip. When two villagers stand near
@@ -82,11 +85,19 @@ start of any conversation, giving you insight into what villagers have been
 talking about. Control the sharing radius and how many entries are kept with the
 `gossip` section in `config.yml`.
 
+### Environment
+
+VillagerGPT watches the surroundings during conversations. Adjust how far away
+entities are detected using `environment.radius` and how often checks occur with
+`environment.interval` in `config.yml`.
+
 ### Local Model
 
 Set `provider` to `local` to use a locally hosted language model. Configure the
-endpoint with `local-model-url`. The plugin will send the conversation as plain
-text and expects the response body to contain the villager's reply.
+endpoint with `local-model-url`. By default the conversation is sent as plain
+text and the response body is used as the villager's reply. Set
+`local-model-json` to `true` if your model expects a JSON payload containing the
+conversation messages.
 
 
 

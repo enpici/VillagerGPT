@@ -77,8 +77,10 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
             )
         )
 
-        val historyLimit = plugin.config.getInt("max-stored-messages", 20)
-        messages.addAll(runBlocking { plugin.memory.loadMessages(villager.uniqueId, historyLimit) })
+
+        val historyLimit = plugin.config.getInt("memory.max-messages", 20)
+        messages.addAll(plugin.memory.loadMessages(villager.uniqueId, historyLimit))
+
 
         val gossipLimit = plugin.config.getInt("gossip.max-entries", 30)
         val gossip = plugin.memory.loadGossip(villager.uniqueId, gossipLimit)

@@ -72,7 +72,8 @@ class VillagerGPT : SuspendingJavaPlugin() {
 
     private fun scheduleTasks() {
         EndStaleConversationsTask(this).runTaskTimer(this, 0L, 200L)
-        EnvironmentWatcher(this).runTaskTimer(this, 0L, 20L)
+        val envInterval = config.getLong("environment.interval", 20L)
+        EnvironmentWatcher(this).runTaskTimer(this, 0L, envInterval)
         GossipManager(this).runTaskTimer(this, 0L, 200L)
     }
 
@@ -88,7 +89,7 @@ class VillagerGPT : SuspendingJavaPlugin() {
     }
 
     private fun createMessageProducer() = when (config.getString("provider")?.lowercase()) {
-        "local" -> LocalMessageProducer(config)
+        "local" -> LocalMessageProducer(this, config)
         else -> OpenAIMessageProducer(config)
     }
 }

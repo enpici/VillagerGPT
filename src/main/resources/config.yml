@@ -10,6 +10,8 @@ openai-model: "gpt-3.5-turbo"
 
 # URL for your locally hosted model's endpoint.
 local-model-url: "http://localhost:8000/"
+# Send conversation to the local model as JSON instead of plain text
+local-model-json: false
 
 # Log conversation messages to server console, useful for catching abuse
 log-conversations: true
@@ -31,6 +33,13 @@ gossip:
   radius: 10
   # Maximum number of gossip entries stored per villager
   max-entries: 30
+
+# Watch the environment during conversations and narrate changes
+environment:
+  # Distance in blocks in which to watch for nearby mobs or players
+  radius: 5
+  # How often to check the environment, in ticks
+  interval: 20
 
 
 # Keep villagers aware during conversations so they can move and react

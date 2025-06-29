@@ -68,9 +68,11 @@ class VillagerConversationManager(private val plugin: VillagerGPT) {
     private fun endConversations(conversationsToEnd: Collection<VillagerConversation>) {
         conversationsToEnd.forEach {
             val history = it.messages.drop(1)
+
             runBlocking {
                 plugin.memory.appendMessages(it.villager.uniqueId, history, plugin.config.getInt("max-stored-messages", 20))
             }
+
             it.ended = true
             val endEvent = VillagerConversationEndEvent(it.player, it.villager)
             plugin.server.pluginManager.callEvent(endEvent)

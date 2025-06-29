@@ -18,6 +18,8 @@ class EnvironmentWatcher(private val plugin: VillagerGPT) : BukkitRunnable() {
 
     private val state = mutableMapOf<VillagerConversation, EnvironmentState>()
 
+    private val radius: Double = plugin.config.getDouble("environment.radius", 5.0)
+
     override fun run() {
         val conversations = plugin.conversationManager.getActiveConversations()
         state.keys.retainAll(conversations)
@@ -46,7 +48,6 @@ class EnvironmentWatcher(private val plugin: VillagerGPT) : BukkitRunnable() {
             }
 
             // Nearby entity detection
-            val radius = 5.0
             val nearby: Set<Int> = world.getNearbyEntities(villager.location, radius, radius, radius)
                 .filter { it != villager && it != convo.player }
                 .map(Entity::getEntityId)
