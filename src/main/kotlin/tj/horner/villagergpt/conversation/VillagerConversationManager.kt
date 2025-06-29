@@ -9,6 +9,10 @@ import tj.horner.villagergpt.events.VillagerConversationStartEvent
 class VillagerConversationManager(private val plugin: Plugin) {
     private val conversations: MutableList<VillagerConversation> = mutableListOf()
 
+    fun getActiveConversations(): List<VillagerConversation> {
+        return conversations.toList()
+    }
+
     fun endStaleConversations() {
         val staleConversations = conversations.filter {
             it.villager.isDead ||

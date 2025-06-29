@@ -14,6 +14,7 @@ import tj.horner.villagergpt.conversation.pipeline.producers.OpenAIMessageProduc
 import tj.horner.villagergpt.conversation.pipeline.producers.LocalMessageProducer
 import tj.horner.villagergpt.handlers.ConversationEventsHandler
 import tj.horner.villagergpt.tasks.EndStaleConversationsTask
+import tj.horner.villagergpt.tasks.EnvironmentWatcher
 import java.util.logging.Level
 
 class VillagerGPT : SuspendingJavaPlugin() {
@@ -56,6 +57,7 @@ class VillagerGPT : SuspendingJavaPlugin() {
 
     private fun scheduleTasks() {
         EndStaleConversationsTask(this).runTaskTimer(this, 0L, 200L)
+        EnvironmentWatcher(this).runTaskTimer(this, 0L, 20L)
     }
 
     private fun validateConfig(): Boolean {

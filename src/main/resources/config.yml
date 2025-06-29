@@ -17,3 +17,8 @@ log-conversations: true
 # Either "system" or "user"; configures the type of message the "preamble"
 # will be. "user" is more likely to work with GPT-3.5
 preamble-message-type: user
+
+# Keep villagers aware during conversations so they can move and react
+# Set to true if you don't want them to freeze in place
+villagers-aware-during-conversation: false
+

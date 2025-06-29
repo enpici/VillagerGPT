@@ -31,7 +31,9 @@ class ConversationEventsHandler(private val plugin: VillagerGPT) : Listener {
 
         evt.conversation.player.sendMessage(ChatMessageTemplate.withPluginNamePrefix(message))
 
-        evt.conversation.villager.isAware = false
+        if (!plugin.config.getBoolean("villagers-aware-during-conversation")) {
+            evt.conversation.villager.isAware = false
+        }
         evt.conversation.villager.lookAt(evt.conversation.player)
 
         plugin.logger.info("Conversation started between ${evt.conversation.player.name} and ${evt.conversation.villager.name}")
@@ -47,7 +49,9 @@ class ConversationEventsHandler(private val plugin: VillagerGPT) : Listener {
         evt.player.sendMessage(ChatMessageTemplate.withPluginNamePrefix(message))
 
         evt.villager.resetOffers()
-        evt.villager.isAware = true
+        if (!plugin.config.getBoolean("villagers-aware-during-conversation")) {
+            evt.villager.isAware = true
+        }
 
         plugin.logger.info("Conversation ended between ${evt.player.name} and ${evt.villager.name}")
     }
