@@ -4,6 +4,10 @@ VillagerGPT breathes new life into your server's villagers, allowing players to 
 
 AI villagers are aware of various aspects of the game world, their reputation with players, and they each have their own distinct personality based on their profession and a randomly-chosen personality archetype.
 
+## Requirements
+
+VillagerGPT requires **Java 17** or newer to build and run. Make sure a compatible JDK is installed and selected when compiling the plugin.
+
 ## Example Conversations
 
 ![](https://cdn.modrinth.com/data/HQ2FTKZf/images/57fca3de995cff548867bc49aa507e554c71d93d.png)
