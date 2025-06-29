@@ -11,6 +11,7 @@ import tj.horner.villagergpt.conversation.pipeline.MessageProcessorPipeline
 import tj.horner.villagergpt.conversation.pipeline.processors.ActionProcessor
 import tj.horner.villagergpt.conversation.pipeline.processors.TradeOfferProcessor
 import tj.horner.villagergpt.conversation.pipeline.producers.OpenAIMessageProducer
+import tj.horner.villagergpt.conversation.pipeline.producers.LocalMessageProducer
 import tj.horner.villagergpt.handlers.ConversationEventsHandler
 import tj.horner.villagergpt.tasks.EndStaleConversationsTask
 import tj.horner.villagergpt.tasks.EnvironmentWatcher
@@ -19,7 +20,7 @@ import java.util.logging.Level
 class VillagerGPT : SuspendingJavaPlugin() {
     val conversationManager = VillagerConversationManager(this)
     val messagePipeline = MessageProcessorPipeline(
-        OpenAIMessageProducer(config),
+        createMessageProducer(),
         listOf(
             ActionProcessor(),
             TradeOfferProcessor(logger)
@@ -30,7 +31,7 @@ class VillagerGPT : SuspendingJavaPlugin() {
         saveDefaultConfig()
 
         if (!validateConfig()) {
-            logger.log(Level.WARNING, "VillagerGPT has not been configured correctly! Please set the `openai-key` in config.yml.")
+            logger.log(Level.WARNING, "VillagerGPT has not been configured correctly! Please check your configuration values.")
             return
         }
 
@@ -60,7 +61,18 @@ class VillagerGPT : SuspendingJavaPlugin() {
     }
 
     private fun validateConfig(): Boolean {
-        val openAiKey = config.getString("openai-key") ?: return false
-        return openAiKey.trim() != ""
+        val provider = config.getString("provider") ?: "openai"
+        return if (provider.equals("local", ignoreCase = true)) {
+            val url = config.getString("local-model-url") ?: return false
+            url.trim().isNotEmpty()
+        } else {
+            val openAiKey = config.getString("openai-key") ?: return false
+            openAiKey.trim().isNotEmpty()
+        }
+    }
+
+    private fun createMessageProducer() = when (config.getString("provider")?.lowercase()) {
+        "local" -> LocalMessageProducer(config)
+        else -> OpenAIMessageProducer(config)
     }
 }

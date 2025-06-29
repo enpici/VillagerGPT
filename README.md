@@ -54,7 +54,11 @@ AI villagers also have one of these randomly selected personalities:
 
 ## Configuration
 
-To configure this plugin you will need an OpenAI API key and, optionally, GPT-4 access. You can obtain an API key [here](https://platform.openai.com/). Once you have obtained one, place it in the plugin's `config.yml` under `openai-key`.
+The plugin can operate in two modes controlled by the `provider` option in `config.yml`.
+When set to `openai`, an OpenAI API key is required. Obtain one [here](https://platform.openai.com/) and place it under `openai-key` in the config.
+If `provider` is set to `local`, VillagerGPT will POST the current conversation to the URL defined by `local-model-url` and use the response as the villager's reply.
+
+Set `villagers-aware-during-conversation` to `true` if you want villagers to keep moving while talking.
 
 ### GPT-4
 
@@ -62,7 +66,14 @@ If you have GPT-4 access, it is highly recommended you switch the model in the c
 
 You can switch to GPT-4 by replacing `openai-model` in `config.yml` with `gpt-4`.
 
-Set `villagers-aware-during-conversation` to `true` if you want villagers to keep moving while talking.
+
+### Local Model
+
+Set `provider` to `local` to use a locally hosted language model. Configure the
+endpoint with `local-model-url`. The plugin will send the conversation as plain
+text and expects the response body to contain the villager's reply.
+
+
 
 ## Commands
 
