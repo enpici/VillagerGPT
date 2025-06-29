@@ -71,6 +71,8 @@ class VillagerConversationManager(private val plugin: VillagerGPT) {
 
             runBlocking {
                 plugin.memory.appendMessages(it.villager.uniqueId, history, plugin.config.getInt("max-stored-messages", 20))
+                val summary = summarize(history)
+                plugin.memory.updateVillagerSummary(it.villager.uniqueId, summary)
             }
 
             it.ended = true
@@ -79,5 +81,10 @@ class VillagerConversationManager(private val plugin: VillagerGPT) {
         }
 
         conversations.removeAll(conversationsToEnd)
+    }
+
+    private fun summarize(history: List<com.aallam.openai.api.chat.ChatMessage>): String {
+        val text = history.takeLast(10).joinToString(" ") { it.content }
+        return if (text.length > 200) text.substring(0, 200) else text
     }
 }

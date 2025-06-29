@@ -31,6 +31,7 @@ AI villagers have access to the following information:
 - Villager information
   - Name (including custom names)
   - Profession
+  - Short summary of past conversations
 
 They can perform the following actions in their responses:
 
@@ -76,6 +77,10 @@ changed in `config.yml` under the `memory` section.
 
 The maximum messages remembered per villager are configured with the
 `memory.max-messages` option.
+
+Each villager is also assigned a random name the first time you speak to them.
+VillagerGPT keeps a short summary of recent interactions which is provided to
+the AI at the start of future conversations.
 
 ### Gossip
 

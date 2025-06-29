@@ -8,6 +8,8 @@ import tj.horner.villagergpt.commands.EndCommand
 import tj.horner.villagergpt.commands.TalkCommand
 import tj.horner.villagergpt.conversation.VillagerConversationManager
 import tj.horner.villagergpt.memory.ConversationMemory
+import org.bukkit.NamespacedKey
+import tj.horner.villagergpt.PersistentDataKeys
 import tj.horner.villagergpt.conversation.pipeline.MessageProcessorPipeline
 import tj.horner.villagergpt.conversation.pipeline.processors.ActionProcessor
 import tj.horner.villagergpt.conversation.pipeline.processors.TradeOfferProcessor
@@ -35,6 +37,8 @@ class VillagerGPT : SuspendingJavaPlugin() {
 
     override suspend fun onEnableAsync() {
         saveDefaultConfig()
+
+        PersistentDataKeys.PERSONALITY = NamespacedKey(this, "personality")
 
         val dbPath = config.getString("memory.db-path") ?: "memory.db"
         val dbFile = if (java.io.File(dbPath).isAbsolute) java.io.File(dbPath) else java.io.File(dataFolder, dbPath)
