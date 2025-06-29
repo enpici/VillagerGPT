@@ -74,6 +74,9 @@ VillagerGPT keeps a history of each villager's conversations in a small SQLite
 database. The location of this database and how many messages are stored can be
 changed in `config.yml` under the `memory` section.
 
+The maximum messages remembered per villager are configured with the
+`memory.max-messages` option.
+
 ### Gossip
 
 Villagers remember interesting pieces of gossip. When two villagers stand near
