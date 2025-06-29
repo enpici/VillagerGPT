@@ -21,7 +21,10 @@ import net.kyori.adventure.text.format.TextDecoration
 import java.util.logging.Level
 
 @OptIn(BetaOpenAI::class)
-class LocalMessageProducer(private val plugin: VillagerGPT, config: Configuration) : ConversationMessageProducer {
+class LocalMessageProducer(
+    private val plugin: VillagerGPT,
+    config: Configuration
+) : ConversationMessageProducer, AutoCloseable {
     private val client = HttpClient(Apache)
     private val endpoint = config.getString("local-model-url") ?: "http://localhost:8000/"
     private val sendJson = config.getBoolean("local-model-json", false)
@@ -59,7 +62,7 @@ class LocalMessageProducer(private val plugin: VillagerGPT, config: Configuratio
         }
     }
 
-    fun close() {
+    override fun close() {
         client.close()
     }
 }
