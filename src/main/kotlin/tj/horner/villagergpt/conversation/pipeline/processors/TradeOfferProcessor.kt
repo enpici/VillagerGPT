@@ -9,8 +9,6 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.MerchantRecipe
-import org.bukkit.plugin.Plugin
-import org.bukkit.plugin.java.JavaPlugin
 import tj.horner.villagergpt.conversation.VillagerConversation
 import tj.horner.villagergpt.conversation.formatting.MessageFormatter
 import tj.horner.villagergpt.conversation.pipeline.ConversationMessageAction
