@@ -18,7 +18,7 @@ import java.util.logging.Level
 
 class VillagerGPT : SuspendingJavaPlugin() {
     val conversationManager = VillagerConversationManager(this)
-    lateinit var memory: MemoryManager
+    var memory: MemoryManager? = null
     val messagePipeline = MessageProcessorPipeline(
         OpenAIMessageProducer(config),
         listOf(
@@ -45,9 +45,7 @@ class VillagerGPT : SuspendingJavaPlugin() {
     override fun onDisable() {
         logger.info("Ending all conversations")
         conversationManager.endAllConversations()
-        if (this::memory.isInitialized) {
-            memory.close()
-        }
+        memory?.close()
     }
 
     private fun setCommandExecutors() {

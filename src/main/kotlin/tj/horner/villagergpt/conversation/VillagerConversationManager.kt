@@ -6,6 +6,9 @@ import org.bukkit.plugin.Plugin
 import tj.horner.villagergpt.events.VillagerConversationEndEvent
 import tj.horner.villagergpt.events.VillagerConversationStartEvent
 
+import com.aallam.openai.api.BetaOpenAI
+
+@OptIn(BetaOpenAI::class)
 class VillagerConversationManager(private val plugin: Plugin) {
     private val conversations: MutableList<VillagerConversation> = mutableListOf()
 
@@ -60,8 +63,8 @@ class VillagerConversationManager(private val plugin: Plugin) {
     private fun endConversations(conversationsToEnd: Collection<VillagerConversation>) {
         conversationsToEnd.forEach {
             it.ended = true
-            if (plugin is tj.horner.villagergpt.VillagerGPT && plugin::memory.isInitialized) {
-                plugin.memory.saveMessages(it.villager, it.messages)
+            if (plugin is tj.horner.villagergpt.VillagerGPT) {
+                plugin.memory?.saveMessages(it.villager, it.messages)
             }
             val endEvent = VillagerConversationEndEvent(it.player, it.villager)
             plugin.server.pluginManager.callEvent(endEvent)

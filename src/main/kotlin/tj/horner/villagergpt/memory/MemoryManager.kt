@@ -1,5 +1,6 @@
 package tj.horner.villagergpt.memory
 
+import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
 import org.bukkit.entity.Villager
@@ -10,6 +11,7 @@ import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.util.Base64
 
+@OptIn(BetaOpenAI::class)
 class MemoryManager(private val plugin: Plugin) {
     private val connection: Connection
     private val maxMessages: Int
