@@ -38,7 +38,7 @@ gossip:
 # Watch the environment during conversations and narrate changes
 environment:
   # Distance in blocks in which to watch for nearby mobs or players
-  radius: 5
+  environment-radius: 5
   # How often to check the environment, in ticks
   interval: 20
 
