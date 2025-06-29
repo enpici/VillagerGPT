@@ -97,7 +97,7 @@ talking about. Control the sharing radius and how many entries are kept with the
 ### Environment
 
 VillagerGPT watches the surroundings during conversations. Adjust how far away
-entities are detected using `environment.radius` and how often checks occur with
+entities are detected using `environment.environment-radius` and how often checks occur with
 `environment.interval` in `config.yml`.
 
 ### Local Model

@@ -18,7 +18,7 @@ class EnvironmentWatcher(private val plugin: VillagerGPT) : BukkitRunnable() {
 
     private val state = mutableMapOf<VillagerConversation, EnvironmentState>()
 
-    private val radius: Double = plugin.config.getDouble("environment.radius", 5.0)
+    private val radius: Double = plugin.config.getDouble("environment.environment-radius", 5.0)
 
     override fun run() {
         val conversations = plugin.conversationManager.getActiveConversations()
