@@ -61,7 +61,7 @@ class VillagerGPT : SuspendingJavaPlugin() {
         logger.info("Ending all conversations")
         conversationManager.endAllConversations()
 
-        if (messageProducer is LocalMessageProducer) {
+        if (messageProducer is AutoCloseable) {
             messageProducer.close()
         }
 

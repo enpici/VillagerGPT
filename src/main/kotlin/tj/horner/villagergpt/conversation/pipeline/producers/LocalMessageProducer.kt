@@ -62,6 +62,9 @@ class LocalMessageProducer(
         }
     }
 
+    /**
+     * Release HTTP resources used by this producer.
+     */
     override fun close() {
         client.close()
     }
