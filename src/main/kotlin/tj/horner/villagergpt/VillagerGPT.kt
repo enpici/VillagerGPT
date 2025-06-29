@@ -7,6 +7,7 @@ import tj.horner.villagergpt.commands.ClearCommand
 import tj.horner.villagergpt.commands.EndCommand
 import tj.horner.villagergpt.commands.TalkCommand
 import tj.horner.villagergpt.conversation.VillagerConversationManager
+import tj.horner.villagergpt.memory.ConversationMemory
 import tj.horner.villagergpt.conversation.pipeline.MessageProcessorPipeline
 import tj.horner.villagergpt.conversation.pipeline.processors.ActionProcessor
 import tj.horner.villagergpt.conversation.pipeline.processors.TradeOfferProcessor
@@ -16,6 +17,9 @@ import tj.horner.villagergpt.tasks.EndStaleConversationsTask
 import java.util.logging.Level
 
 class VillagerGPT : SuspendingJavaPlugin() {
+    lateinit var memory: ConversationMemory
+        private set
+
     val conversationManager = VillagerConversationManager(this)
     val messagePipeline = MessageProcessorPipeline(
         OpenAIMessageProducer(config),
@@ -27,6 +31,8 @@ class VillagerGPT : SuspendingJavaPlugin() {
 
     override suspend fun onEnableAsync() {
         saveDefaultConfig()
+
+        memory = ConversationMemory(config.getString("db-file") ?: "villagergpt.db")
 
         if (!validateConfig()) {
             logger.log(Level.WARNING, "VillagerGPT has not been configured correctly! Please set the `openai-key` in config.yml.")
@@ -41,6 +47,7 @@ class VillagerGPT : SuspendingJavaPlugin() {
     override fun onDisable() {
         logger.info("Ending all conversations")
         conversationManager.endAllConversations()
+        memory.close()
     }
 
     private fun setCommandExecutors() {

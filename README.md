@@ -57,6 +57,13 @@ If you have GPT-4 access, it is highly recommended you switch the model in the c
 
 You can switch to GPT-4 by replacing `openai-model` in `config.yml` with `gpt-4`.
 
+### Memory Database
+
+VillagerGPT stores a small amount of conversation history for each villager in a
+SQLite database. The database file path can be changed with the `db-file`
+setting and you can control how many messages are retained per villager using
+`max-stored-messages`.
+
 ## Commands
 
 - `/ttv`: Initiate a conversation with a villager
