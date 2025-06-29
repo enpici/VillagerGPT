@@ -3,6 +3,7 @@ package tj.horner.villagergpt.conversation
 import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
+import kotlinx.coroutines.runBlocking
 import com.destroystokyo.paper.entity.villager.ReputationType
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
@@ -76,8 +77,10 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
             )
         )
 
+
         val historyLimit = plugin.config.getInt("memory.max-messages", 20)
         messages.addAll(plugin.memory.loadMessages(villager.uniqueId, historyLimit))
+
 
         val gossipLimit = plugin.config.getInt("gossip.max-entries", 30)
         val gossip = plugin.memory.loadGossip(villager.uniqueId, gossipLimit)
