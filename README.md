@@ -65,6 +65,12 @@ Set `provider` to `local` to use a locally hosted language model. Configure the
 endpoint with `local-model-url`. The plugin will send the conversation as plain
 text and expects the response body to contain the villager's reply.
 
+### Memory
+
+VillagerGPT can remember past conversations. The plugin stores messages in a
+SQLite database whose location is configured with `database-path`. You can also
+limit how many messages are kept per villager with `max-stored-messages`.
+
 ## Commands
 
 - `/ttv`: Initiate a conversation with a villager

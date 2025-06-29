@@ -6,9 +6,11 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import org.bukkit.configuration.Configuration
+import com.aallam.openai.api.BetaOpenAI
 import tj.horner.villagergpt.conversation.VillagerConversation
 import tj.horner.villagergpt.conversation.pipeline.ConversationMessageProducer
 
+@OptIn(BetaOpenAI::class)
 class LocalMessageProducer(config: Configuration) : ConversationMessageProducer {
     private val client = HttpClient(Apache)
     private val endpoint = config.getString("local-model-url") ?: "http://localhost:8000/"

@@ -2,11 +2,13 @@ package tj.horner.villagergpt.conversation
 
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
-import org.bukkit.plugin.Plugin
+import com.aallam.openai.api.BetaOpenAI
+import tj.horner.villagergpt.VillagerGPT
 import tj.horner.villagergpt.events.VillagerConversationEndEvent
 import tj.horner.villagergpt.events.VillagerConversationStartEvent
 
-class VillagerConversationManager(private val plugin: Plugin) {
+@OptIn(BetaOpenAI::class)
+class VillagerConversationManager(private val plugin: VillagerGPT) {
     private val conversations: MutableList<VillagerConversation> = mutableListOf()
 
     fun endStaleConversations() {
@@ -59,6 +61,7 @@ class VillagerConversationManager(private val plugin: Plugin) {
 
     private fun endConversations(conversationsToEnd: Collection<VillagerConversation>) {
         conversationsToEnd.forEach {
+            plugin.memory.saveMessages(it.villager.uniqueId, it.messages)
             it.ended = true
             val endEvent = VillagerConversationEndEvent(it.player, it.villager)
             plugin.server.pluginManager.callEvent(endEvent)

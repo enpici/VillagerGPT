@@ -17,3 +17,9 @@ log-conversations: true
 # Either "system" or "user"; configures the type of message the "preamble"
 # will be. "user" is more likely to work with GPT-3.5
 preamble-message-type: user
+
+# Path to the SQLite database storing villager memories
+database-path: "./plugins/VillagerGPT/memory.db"
+
+# Maximum number of messages to store per villager (0 to disable)
+max-stored-messages: 20

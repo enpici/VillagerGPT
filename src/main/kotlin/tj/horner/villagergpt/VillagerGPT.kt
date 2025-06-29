@@ -12,12 +12,14 @@ import tj.horner.villagergpt.conversation.pipeline.processors.ActionProcessor
 import tj.horner.villagergpt.conversation.pipeline.processors.TradeOfferProcessor
 import tj.horner.villagergpt.conversation.pipeline.producers.OpenAIMessageProducer
 import tj.horner.villagergpt.conversation.pipeline.producers.LocalMessageProducer
+import tj.horner.villagergpt.memory.ConversationMemory
 import tj.horner.villagergpt.handlers.ConversationEventsHandler
 import tj.horner.villagergpt.tasks.EndStaleConversationsTask
 import java.util.logging.Level
 
 class VillagerGPT : SuspendingJavaPlugin() {
     val conversationManager = VillagerConversationManager(this)
+    val memory = ConversationMemory(this)
     val messagePipeline = MessageProcessorPipeline(
         createMessageProducer(),
         listOf(
@@ -42,6 +44,7 @@ class VillagerGPT : SuspendingJavaPlugin() {
     override fun onDisable() {
         logger.info("Ending all conversations")
         conversationManager.endAllConversations()
+        memory.close()
     }
 
     private fun setCommandExecutors() {
