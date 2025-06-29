@@ -29,7 +29,9 @@ dependencies {
     implementation platform("com.aallam.openai:openai-client-bom:3.2.1")
     implementation "com.aallam.openai:openai-client"
     implementation "io.ktor:ktor-client-apache"
-    implementation "org.xerial:sqlite-jdbc:3.45.1.0"
+
+    implementation "org.xerial:sqlite-jdbc:3.45.3.0"
+
 }
 
 def targetJavaVersion = 17

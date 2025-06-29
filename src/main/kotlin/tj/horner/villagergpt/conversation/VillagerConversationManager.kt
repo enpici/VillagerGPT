@@ -7,8 +7,12 @@ import tj.horner.villagergpt.VillagerGPT
 import tj.horner.villagergpt.events.VillagerConversationEndEvent
 import tj.horner.villagergpt.events.VillagerConversationStartEvent
 
+
+import com.aallam.openai.api.BetaOpenAI
+
 @OptIn(BetaOpenAI::class)
-class VillagerConversationManager(private val plugin: VillagerGPT) {
+class VillagerConversationManager(private val plugin: Plugin) {
+
     private val conversations: MutableList<VillagerConversation> = mutableListOf()
 
     fun getActiveConversations(): List<VillagerConversation> {
@@ -68,6 +72,9 @@ class VillagerConversationManager(private val plugin: VillagerGPT) {
             val history = it.messages.drop(1)
             plugin.memory.appendMessages(it.villager.uniqueId, history, plugin.config.getInt("max-stored-messages", 20))
             it.ended = true
+            if (plugin is tj.horner.villagergpt.VillagerGPT) {
+                plugin.memory?.saveMessages(it.villager, it.messages)
+            }
             val endEvent = VillagerConversationEndEvent(it.player, it.villager)
             plugin.server.pluginManager.callEvent(endEvent)
         }

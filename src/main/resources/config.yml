@@ -18,11 +18,14 @@ log-conversations: true
 # will be. "user" is more likely to work with GPT-3.5
 preamble-message-type: user
 
-# Path to the SQLite database file used for villager memory
-db-file: villagergpt.db
 
-# Maximum number of messages to keep per villager
-max-stored-messages: 20
+# Conversation memory settings
+memory:
+  # Path to SQLite database file. Relative paths are relative to the plugin data folder
+  db-path: memory.db
+  # Maximum number of messages to remember per villager
+  max-messages: 20
+
 
 # Keep villagers aware during conversations so they can move and react
 # Set to true if you don't want them to freeze in place

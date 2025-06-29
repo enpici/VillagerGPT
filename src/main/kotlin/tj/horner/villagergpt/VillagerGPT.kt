@@ -15,7 +15,8 @@ import tj.horner.villagergpt.conversation.pipeline.producers.OpenAIMessageProduc
 import tj.horner.villagergpt.conversation.pipeline.producers.LocalMessageProducer
 import tj.horner.villagergpt.handlers.ConversationEventsHandler
 import tj.horner.villagergpt.tasks.EndStaleConversationsTask
-import tj.horner.villagergpt.tasks.EnvironmentWatcher
+import tj.horner.villagergpt.memory.MemoryManager
+
 import java.util.logging.Level
 
 class VillagerGPT : SuspendingJavaPlugin() {
@@ -23,6 +24,7 @@ class VillagerGPT : SuspendingJavaPlugin() {
         private set
 
     val conversationManager = VillagerConversationManager(this)
+    var memory: MemoryManager? = null
     val messagePipeline = MessageProcessorPipeline(
         createMessageProducer(),
         listOf(
@@ -34,7 +36,8 @@ class VillagerGPT : SuspendingJavaPlugin() {
     override suspend fun onEnableAsync() {
         saveDefaultConfig()
 
-        memory = ConversationMemory(config.getString("db-file") ?: "villagergpt.db")
+        memory = MemoryManager(this)
+
 
         if (!validateConfig()) {
             logger.log(Level.WARNING, "VillagerGPT has not been configured correctly! Please check your configuration values.")
@@ -49,7 +52,9 @@ class VillagerGPT : SuspendingJavaPlugin() {
     override fun onDisable() {
         logger.info("Ending all conversations")
         conversationManager.endAllConversations()
-        memory.close()
+
+        memory?.close()
+
     }
 
     private fun setCommandExecutors() {

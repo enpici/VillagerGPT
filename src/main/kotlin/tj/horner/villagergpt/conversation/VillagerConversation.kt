@@ -21,6 +21,11 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
     var ended = false
 
     init {
+        if (plugin is tj.horner.villagergpt.VillagerGPT) {
+            plugin.memory?.let { mem ->
+                messages.addAll(mem.loadMessages(villager))
+            }
+        }
         startConversation()
     }
 
