@@ -8,7 +8,11 @@ import com.destroystokyo.paper.entity.villager.ReputationType
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
 import tj.horner.villagergpt.VillagerGPT
+import tj.horner.villagergpt.PersistentDataKeys
 import tj.horner.villagergpt.events.VillagerConversationMessageEvent
+import net.kyori.adventure.text.Component
+import org.bukkit.persistence.PersistentDataType
+import tj.horner.villagergpt.conversation.VillagerNameGenerator
 import java.time.Duration
 import java.util.*
 import kotlin.random.Random
@@ -16,6 +20,10 @@ import kotlin.random.Random
 @OptIn(BetaOpenAI::class)
 class VillagerConversation(private val plugin: VillagerGPT, val villager: Villager, val player: Player) {
     private var lastMessageAt: Date = Date()
+
+    private lateinit var villagerName: String
+    private var villagerSummary: String? = null
+    private lateinit var personality: VillagerPersonality
 
     val messages = mutableListOf<ChatMessage>()
     var pendingResponse = false
@@ -61,6 +69,20 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
     }
 
     private fun startConversation() {
+        val info = plugin.memory.getVillagerInfo(villager.uniqueId)
+        if (info == null) {
+            villagerName = VillagerNameGenerator.randomName()
+            plugin.memory.insertVillager(villager.uniqueId, villagerName)
+        } else {
+            villagerName = info.name
+            villagerSummary = info.summary
+        }
+
+        personality = getPersonality()
+
+        villager.customName = net.kyori.adventure.text.Component.text(villagerName)
+        villager.isCustomNameVisible = true
+
         var messageRole = ChatRole.System
         var prompt = generateSystemPrompt()
 
@@ -95,13 +117,14 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
         val weather = if (world.hasStorm()) "Rainy" else "Sunny"
         val biome = world.getBiome(villager.location)
         val time = if (world.isDayTime) "Day" else "Night"
-        val personality = getPersonality()
         val playerRep = getPlayerRepScore()
 
-        plugin.logger.info("${villager.name} is $personality")
+        plugin.logger.info("$villagerName is $personality")
 
         return """
-        You are a villager in the game Minecraft where you can converse with the player and come up with new trades based on your conversation.
+        You are $villagerName, a villager in the game Minecraft where you can converse with the player and come up with new trades based on your conversation.
+
+        ${villagerSummary?.let { "Previously: $it" } ?: "" }
 
         TRADING:
 
@@ -148,7 +171,7 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
         - Reputation Score (range is -700 to 725, 0 is neutral, higher is better): $playerRep
 
         Personality:
-        - Your Name: ${villager.name}
+        - Your Name: $villagerName
         - Your Profession: ${villager.profession.name}
         - ${personality.promptDescription()}
         - Act like a villager and stay in character the whole time
@@ -158,9 +181,17 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
     }
 
     private fun getPersonality(): VillagerPersonality {
-        val personalities = VillagerPersonality.values()
-        val rnd = Random(villager.uniqueId.mostSignificantBits)
-        return personalities[rnd.nextInt(0, personalities.size)]
+        val container = villager.persistentDataContainer
+        val stored = container.get(PersistentDataKeys.PERSONALITY, PersistentDataType.STRING)
+        return if (stored != null) {
+            VillagerPersonality.valueOf(stored)
+        } else {
+            val personalities = VillagerPersonality.values()
+            val rnd = Random(villager.uniqueId.mostSignificantBits)
+            val chosen = personalities[rnd.nextInt(personalities.size)]
+            container.set(PersistentDataKeys.PERSONALITY, PersistentDataType.STRING, chosen.name)
+            chosen
+        }
     }
 
     private fun getPlayerRepScore(): Int {

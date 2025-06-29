@@ -27,6 +27,7 @@ memory:
   db-path: memory.db
   # Maximum number of messages to remember per villager
   max-messages: 20
+  # Villager names and summaries are stored here as well
 
 gossip:
   # Distance in blocks within which villagers will exchange gossip

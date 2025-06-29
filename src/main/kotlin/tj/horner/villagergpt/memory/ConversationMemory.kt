@@ -37,6 +37,16 @@ class ConversationMemory(dbFile: String) {
                 """.trimIndent()
             )
             stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_gossip_villager_uuid ON gossip(villager_uuid)")
+
+            stmt.executeUpdate(
+                """
+                CREATE TABLE IF NOT EXISTS villagers (
+                    uuid TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    summary TEXT
+                )
+                """.trimIndent()
+            )
         }
     }
 
@@ -111,6 +121,35 @@ class ConversationMemory(dbFile: String) {
             ps.setString(1, uuid.toString())
             ps.setString(2, uuid.toString())
             ps.setInt(3, maxEntries)
+            ps.executeUpdate()
+        }
+    }
+
+    data class VillagerInfo(val name: String, val summary: String?)
+
+    fun getVillagerInfo(uuid: UUID): VillagerInfo? {
+        connection.prepareStatement("SELECT name, summary FROM villagers WHERE uuid=?").use { ps ->
+            ps.setString(1, uuid.toString())
+            val rs = ps.executeQuery()
+            if (rs.next()) {
+                return VillagerInfo(rs.getString("name"), rs.getString("summary"))
+            }
+        }
+        return null
+    }
+
+    fun insertVillager(uuid: UUID, name: String) {
+        connection.prepareStatement("INSERT INTO villagers (uuid, name) VALUES (?, ?)").use { ps ->
+            ps.setString(1, uuid.toString())
+            ps.setString(2, name)
+            ps.executeUpdate()
+        }
+    }
+
+    fun updateVillagerSummary(uuid: UUID, summary: String) {
+        connection.prepareStatement("UPDATE villagers SET summary=? WHERE uuid=?").use { ps ->
+            ps.setString(1, summary)
+            ps.setString(2, uuid.toString())
             ps.executeUpdate()
         }
     }
