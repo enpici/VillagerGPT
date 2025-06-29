@@ -27,8 +27,9 @@ class VillagerGPT : SuspendingJavaPlugin() {
         private set
 
     val conversationManager = VillagerConversationManager(this)
+    private val messageProducer = createMessageProducer()
     val messagePipeline = MessageProcessorPipeline(
-        createMessageProducer(),
+        messageProducer,
         listOf(
             ActionProcessor(),
             TradeOfferProcessor(logger)
@@ -59,6 +60,10 @@ class VillagerGPT : SuspendingJavaPlugin() {
     override fun onDisable() {
         logger.info("Ending all conversations")
         conversationManager.endAllConversations()
+
+        if (messageProducer is LocalMessageProducer) {
+            messageProducer.close()
+        }
 
         memory.close()
 
