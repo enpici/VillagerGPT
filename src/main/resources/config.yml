@@ -26,6 +26,12 @@ memory:
   # Maximum number of messages to remember per villager
   max-messages: 20
 
+gossip:
+  # Distance in blocks within which villagers will exchange gossip
+  radius: 10
+  # Maximum number of gossip entries stored per villager
+  max-entries: 30
+
 
 # Keep villagers aware during conversations so they can move and react
 # Set to true if you don't want them to freeze in place

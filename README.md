@@ -37,6 +37,7 @@ They can perform the following actions in their responses:
 - Propose trades
 - Shake head
 - Play various sounds
+- Recall and share gossip with nearby villagers
 
 Villagers will also react to their surroundings. The plugin watches the
 environment during a conversation and inserts messages when the weather
@@ -72,6 +73,14 @@ You can switch to GPT-4 by replacing `openai-model` in `config.yml` with `gpt-4`
 VillagerGPT keeps a history of each villager's conversations in a small SQLite
 database. The location of this database and how many messages are stored can be
 changed in `config.yml` under the `memory` section.
+
+### Gossip
+
+Villagers remember interesting pieces of gossip. When two villagers stand near
+each other they will exchange a few of these rumors. Gossip is loaded into the
+start of any conversation, giving you insight into what villagers have been
+talking about. Control the sharing radius and how many entries are kept with the
+`gossip` section in `config.yml`.
 
 ### Local Model
 

@@ -24,6 +24,17 @@ class ConversationMemory(dbFile: String) {
                 """.trimIndent()
             )
             stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_villager_uuid ON messages(villager_uuid)")
+
+            stmt.executeUpdate(
+                """
+                CREATE TABLE IF NOT EXISTS gossip (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    villager_uuid TEXT NOT NULL,
+                    content TEXT NOT NULL
+                )
+                """.trimIndent()
+            )
+            stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_gossip_villager_uuid ON gossip(villager_uuid)")
         }
     }
 
@@ -64,6 +75,40 @@ class ConversationMemory(dbFile: String) {
             ps.setString(1, uuid.toString())
             ps.setString(2, uuid.toString())
             ps.setInt(3, maxMessages)
+            ps.executeUpdate()
+        }
+    }
+
+    fun loadGossip(uuid: UUID, limit: Int): List<String> {
+        val gossip = mutableListOf<String>()
+        connection.prepareStatement("SELECT content FROM gossip WHERE villager_uuid=? ORDER BY id DESC LIMIT ?").use { ps ->
+            ps.setString(1, uuid.toString())
+            ps.setInt(2, limit)
+            val rs = ps.executeQuery()
+            while (rs.next()) {
+                gossip.add(rs.getString("content"))
+            }
+        }
+        return gossip.reversed()
+    }
+
+    fun addGossip(uuid: UUID, entries: List<String>, maxEntries: Int) {
+        if (entries.isEmpty()) return
+        connection.prepareStatement("INSERT INTO gossip (villager_uuid, content) VALUES (?, ?)").use { ps ->
+            for (entry in entries) {
+                ps.setString(1, uuid.toString())
+                ps.setString(2, entry)
+                ps.addBatch()
+            }
+            ps.executeBatch()
+        }
+
+        connection.prepareStatement(
+            "DELETE FROM gossip WHERE villager_uuid=? AND id NOT IN (SELECT id FROM gossip WHERE villager_uuid=? ORDER BY id DESC LIMIT ?)"
+        ).use { ps ->
+            ps.setString(1, uuid.toString())
+            ps.setString(2, uuid.toString())
+            ps.setInt(3, maxEntries)
             ps.executeUpdate()
         }
     }

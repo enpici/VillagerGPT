@@ -16,6 +16,7 @@ import tj.horner.villagergpt.conversation.pipeline.producers.LocalMessageProduce
 import tj.horner.villagergpt.handlers.ConversationEventsHandler
 import tj.horner.villagergpt.tasks.EndStaleConversationsTask
 import tj.horner.villagergpt.tasks.EnvironmentWatcher
+import tj.horner.villagergpt.tasks.GossipManager
 
 import java.util.logging.Level
 
@@ -72,6 +73,7 @@ class VillagerGPT : SuspendingJavaPlugin() {
     private fun scheduleTasks() {
         EndStaleConversationsTask(this).runTaskTimer(this, 0L, 200L)
         EnvironmentWatcher(this).runTaskTimer(this, 0L, 20L)
+        GossipManager(this).runTaskTimer(this, 0L, 200L)
     }
 
     private fun validateConfig(): Boolean {
