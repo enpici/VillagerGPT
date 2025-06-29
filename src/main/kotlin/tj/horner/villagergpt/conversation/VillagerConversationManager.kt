@@ -1,17 +1,14 @@
 package tj.horner.villagergpt.conversation
 
-import com.aallam.openai.api.BetaOpenAI
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
 import tj.horner.villagergpt.VillagerGPT
 import tj.horner.villagergpt.events.VillagerConversationEndEvent
 import tj.horner.villagergpt.events.VillagerConversationStartEvent
-
-
 import com.aallam.openai.api.BetaOpenAI
 
 @OptIn(BetaOpenAI::class)
-class VillagerConversationManager(private val plugin: Plugin) {
+class VillagerConversationManager(private val plugin: VillagerGPT) {
 
     private val conversations: MutableList<VillagerConversation> = mutableListOf()
 
@@ -72,9 +69,6 @@ class VillagerConversationManager(private val plugin: Plugin) {
             val history = it.messages.drop(1)
             plugin.memory.appendMessages(it.villager.uniqueId, history, plugin.config.getInt("max-stored-messages", 20))
             it.ended = true
-            if (plugin is tj.horner.villagergpt.VillagerGPT) {
-                plugin.memory?.saveMessages(it.villager, it.messages)
-            }
             val endEvent = VillagerConversationEndEvent(it.player, it.villager)
             plugin.server.pluginManager.callEvent(endEvent)
         }
