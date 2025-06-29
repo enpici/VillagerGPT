@@ -32,6 +32,13 @@ gossip:
   # Maximum number of gossip entries stored per villager
   max-entries: 30
 
+# Watch the environment during conversations and narrate changes
+environment:
+  # Distance in blocks in which to watch for nearby mobs or players
+  radius: 5
+  # How often to check the environment, in ticks
+  interval: 20
+
 
 # Keep villagers aware during conversations so they can move and react
 # Set to true if you don't want them to freeze in place
