@@ -24,6 +24,7 @@ AI villagers have access to the following information:
   - Biome they are in
   - Time of day
   - Weather
+  - Nearby events such as changes in time, weather or approaching mobs
 - Player information
   - Username
   - [Reputation score](https://minecraft.fandom.com/wiki/Villager#Gossiping)
@@ -37,6 +38,10 @@ They can perform the following actions in their responses:
 - Shake head
 - Play various sounds
 
+Villagers will also react to their surroundings. The plugin watches the
+environment during a conversation and inserts messages when the weather
+changes, night falls or new mobs come close.
+
 AI villagers also have one of these randomly selected personalities:
 
 - Elder: "As an elder of the village, you have seen and done many things across the years"
@@ -49,7 +54,11 @@ AI villagers also have one of these randomly selected personalities:
 
 ## Configuration
 
-To configure this plugin you will need an OpenAI API key and, optionally, GPT-4 access. You can obtain an API key [here](https://platform.openai.com/). Once you have obtained one, place it in the plugin's `config.yml` under `openai-key`.
+The plugin can operate in two modes controlled by the `provider` option in `config.yml`.
+When set to `openai`, an OpenAI API key is required. Obtain one [here](https://platform.openai.com/) and place it under `openai-key` in the config.
+If `provider` is set to `local`, VillagerGPT will POST the current conversation to the URL defined by `local-model-url` and use the response as the villager's reply.
+
+Set `villagers-aware-during-conversation` to `true` if you want villagers to keep moving while talking.
 
 ### GPT-4
 
@@ -57,11 +66,20 @@ If you have GPT-4 access, it is highly recommended you switch the model in the c
 
 You can switch to GPT-4 by replacing `openai-model` in `config.yml` with `gpt-4`.
 
+
 ### Conversation Memory
 
 VillagerGPT keeps a history of each villager's conversations in a small SQLite
 database. The location of this database and how many messages are stored can be
 changed in `config.yml` under the `memory` section.
+
+### Local Model
+
+Set `provider` to `local` to use a locally hosted language model. Configure the
+endpoint with `local-model-url`. The plugin will send the conversation as plain
+text and expects the response body to contain the villager's reply.
+
+
 
 ## Commands
 

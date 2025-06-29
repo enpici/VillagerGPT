@@ -1,9 +1,15 @@
+# Use "openai" to talk to the OpenAI API or "local" to use a locally hosted model.
+provider: "openai"
+
 # Obtain a key here: https://platform.openai.com
 openai-key: ""
 
 # If you have GPT-4 access, it is highly recommended to use it here.
 # Switch this to "gpt-4" if you do.
 openai-model: "gpt-3.5-turbo"
+
+# URL for your locally hosted model's endpoint.
+local-model-url: "http://localhost:8000/"
 
 # Log conversation messages to server console, useful for catching abuse
 log-conversations: true
@@ -12,9 +18,16 @@ log-conversations: true
 # will be. "user" is more likely to work with GPT-3.5
 preamble-message-type: user
 
+
 # Conversation memory settings
 memory:
   # Path to SQLite database file. Relative paths are relative to the plugin data folder
   db-path: memory.db
   # Maximum number of messages to remember per villager
   max-messages: 20
+
+
+# Keep villagers aware during conversations so they can move and react
+# Set to true if you don't want them to freeze in place
+villagers-aware-during-conversation: false
+

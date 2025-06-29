@@ -6,14 +6,14 @@ import com.aallam.openai.api.chat.ChatRole
 import com.destroystokyo.paper.entity.villager.ReputationType
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
-import org.bukkit.plugin.Plugin
+import tj.horner.villagergpt.VillagerGPT
 import tj.horner.villagergpt.events.VillagerConversationMessageEvent
 import java.time.Duration
 import java.util.*
 import kotlin.random.Random
 
 @OptIn(BetaOpenAI::class)
-class VillagerConversation(private val plugin: Plugin, val villager: Villager, val player: Player) {
+class VillagerConversation(private val plugin: VillagerGPT, val villager: Villager, val player: Player) {
     private var lastMessageAt: Date = Date()
 
     val messages = mutableListOf<ChatMessage>()
@@ -80,6 +80,9 @@ class VillagerConversation(private val plugin: Plugin, val villager: Villager, v
                 content = prompt
             )
         )
+
+        val historyLimit = plugin.config.getInt("max-stored-messages", 20)
+        messages.addAll(plugin.memory.loadMessages(villager.uniqueId, historyLimit))
     }
 
     private fun generateSystemPrompt(): String {
