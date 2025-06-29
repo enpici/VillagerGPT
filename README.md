@@ -6,7 +6,7 @@ AI villagers are aware of various aspects of the game world, their reputation wi
 
 ## Requirements
 
-VillagerGPT requires **Java 17** or newer to build and run. Make sure a compatible JDK is installed and selected when compiling the plugin.
+VillagerGPT requires **Java 21** or newer to build and run. Make sure a compatible JDK is installed and selected when compiling the plugin.
 
 ## Example Conversations
 
