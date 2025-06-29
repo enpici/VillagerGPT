@@ -94,8 +94,10 @@ entities are detected using `environment.radius` and how often checks occur with
 ### Local Model
 
 Set `provider` to `local` to use a locally hosted language model. Configure the
-endpoint with `local-model-url`. The plugin will send the conversation as plain
-text and expects the response body to contain the villager's reply.
+endpoint with `local-model-url`. By default the conversation is sent as plain
+text and the response body is used as the villager's reply. Set
+`local-model-json` to `true` if your model expects a JSON payload containing the
+conversation messages.
 
 
 

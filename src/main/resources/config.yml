@@ -10,6 +10,8 @@ openai-model: "gpt-3.5-turbo"
 
 # URL for your locally hosted model's endpoint.
 local-model-url: "http://localhost:8000/"
+# Send conversation to the local model as JSON instead of plain text
+local-model-json: false
 
 # Log conversation messages to server console, useful for catching abuse
 log-conversations: true

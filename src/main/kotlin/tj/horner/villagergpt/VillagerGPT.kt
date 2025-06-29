@@ -89,7 +89,7 @@ class VillagerGPT : SuspendingJavaPlugin() {
     }
 
     private fun createMessageProducer() = when (config.getString("provider")?.lowercase()) {
-        "local" -> LocalMessageProducer(config)
+        "local" -> LocalMessageProducer(this, config)
         else -> OpenAIMessageProducer(config)
     }
 }
