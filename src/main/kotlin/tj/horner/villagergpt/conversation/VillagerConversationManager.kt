@@ -60,6 +60,9 @@ class VillagerConversationManager(private val plugin: Plugin) {
     private fun endConversations(conversationsToEnd: Collection<VillagerConversation>) {
         conversationsToEnd.forEach {
             it.ended = true
+            if (plugin is tj.horner.villagergpt.VillagerGPT && plugin::memory.isInitialized) {
+                plugin.memory.saveMessages(it.villager, it.messages)
+            }
             val endEvent = VillagerConversationEndEvent(it.player, it.villager)
             plugin.server.pluginManager.callEvent(endEvent)
         }

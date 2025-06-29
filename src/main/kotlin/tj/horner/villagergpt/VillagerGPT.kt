@@ -13,10 +13,12 @@ import tj.horner.villagergpt.conversation.pipeline.processors.TradeOfferProcesso
 import tj.horner.villagergpt.conversation.pipeline.producers.OpenAIMessageProducer
 import tj.horner.villagergpt.handlers.ConversationEventsHandler
 import tj.horner.villagergpt.tasks.EndStaleConversationsTask
+import tj.horner.villagergpt.memory.MemoryManager
 import java.util.logging.Level
 
 class VillagerGPT : SuspendingJavaPlugin() {
     val conversationManager = VillagerConversationManager(this)
+    lateinit var memory: MemoryManager
     val messagePipeline = MessageProcessorPipeline(
         OpenAIMessageProducer(config),
         listOf(
@@ -27,6 +29,8 @@ class VillagerGPT : SuspendingJavaPlugin() {
 
     override suspend fun onEnableAsync() {
         saveDefaultConfig()
+
+        memory = MemoryManager(this)
 
         if (!validateConfig()) {
             logger.log(Level.WARNING, "VillagerGPT has not been configured correctly! Please set the `openai-key` in config.yml.")
@@ -41,6 +45,9 @@ class VillagerGPT : SuspendingJavaPlugin() {
     override fun onDisable() {
         logger.info("Ending all conversations")
         conversationManager.endAllConversations()
+        if (this::memory.isInitialized) {
+            memory.close()
+        }
     }
 
     private fun setCommandExecutors() {

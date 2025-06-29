@@ -21,6 +21,9 @@ class VillagerConversation(private val plugin: Plugin, val villager: Villager, v
     var ended = false
 
     init {
+        if (plugin is tj.horner.villagergpt.VillagerGPT && plugin::memory.isInitialized) {
+            messages.addAll(plugin.memory.loadMessages(villager))
+        }
         startConversation()
     }
 
