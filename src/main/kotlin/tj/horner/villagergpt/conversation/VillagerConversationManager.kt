@@ -70,7 +70,11 @@ class VillagerConversationManager(private val plugin: VillagerGPT) {
             val history = it.messages.drop(1)
 
             runBlocking {
-                plugin.memory.appendMessages(it.villager.uniqueId, history, plugin.config.getInt("max-stored-messages", 20))
+                plugin.memory.appendMessages(
+                    it.villager.uniqueId,
+                    history,
+                    plugin.config.getInt("memory.max-messages", 20)
+                )
             }
 
             it.ended = true
