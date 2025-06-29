@@ -58,4 +58,8 @@ class LocalMessageProducer(private val plugin: VillagerGPT, config: Configuratio
             throw e
         }
     }
+
+    fun close() {
+        client.close()
+    }
 }
