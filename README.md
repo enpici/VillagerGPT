@@ -24,6 +24,7 @@ AI villagers have access to the following information:
   - Biome they are in
   - Time of day
   - Weather
+  - Nearby events such as changes in time, weather or approaching mobs
 - Player information
   - Username
   - [Reputation score](https://minecraft.fandom.com/wiki/Villager#Gossiping)
@@ -36,6 +37,10 @@ They can perform the following actions in their responses:
 - Propose trades
 - Shake head
 - Play various sounds
+
+Villagers will also react to their surroundings. The plugin watches the
+environment during a conversation and inserts messages when the weather
+changes, night falls or new mobs come close.
 
 AI villagers also have one of these randomly selected personalities:
 
@@ -56,6 +61,8 @@ To configure this plugin you will need an OpenAI API key and, optionally, GPT-4 
 If you have GPT-4 access, it is highly recommended you switch the model in the config to use GPT-4 instead of the default model. GPT-4 is significantly better at listening to the `system` message and thus following instructions.
 
 You can switch to GPT-4 by replacing `openai-model` in `config.yml` with `gpt-4`.
+
+Set `villagers-aware-during-conversation` to `true` if you want villagers to keep moving while talking.
 
 ## Commands
 
