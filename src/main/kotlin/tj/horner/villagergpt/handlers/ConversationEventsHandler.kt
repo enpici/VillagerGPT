@@ -16,6 +16,7 @@ import org.bukkit.event.player.PlayerInteractEntityEvent
 import tj.horner.villagergpt.MetadataKey
 import tj.horner.villagergpt.VillagerGPT
 import tj.horner.villagergpt.chat.ChatMessageTemplate
+import tj.horner.villagergpt.conversation.VillagerConversation
 import tj.horner.villagergpt.conversation.formatting.MessageFormatter
 import tj.horner.villagergpt.conversation.pipeline.producers.ProviderException
 import tj.horner.villagergpt.events.VillagerConversationEndEvent
@@ -23,6 +24,12 @@ import tj.horner.villagergpt.events.VillagerConversationMessageEvent
 import tj.horner.villagergpt.events.VillagerConversationStartEvent
 
 class ConversationEventsHandler(private val plugin: VillagerGPT) : Listener {
+    private companion object {
+        const val PROVIDER_UNKNOWN = "unknown"
+        const val ERROR_PROVIDER_FAILED = "VGPT-CONV-001"
+        const val ERROR_UNEXPECTED = "VGPT-CONV-002"
+    }
+
     @EventHandler
     fun onConversationStart(evt: VillagerConversationStartEvent) {
         val message = Component.text("You are now in a conversation with ")
@@ -107,13 +114,12 @@ class ConversationEventsHandler(private val plugin: VillagerGPT) : Listener {
         }
 
         conversation.pendingResponse = true
-        val villager = conversation.villager
 
         try {
             val pipeline = plugin.messagePipeline
 
             val playerMessage = PlainTextComponentSerializer.plainText().serialize(evt.originalMessage())
-            val formattedPlayerMessage = MessageFormatter.formatMessageFromPlayer(Component.text(playerMessage), villager)
+            val formattedPlayerMessage = MessageFormatter.formatMessageFromPlayer(Component.text(playerMessage), conversation.villager)
 
             evt.player.sendMessage(formattedPlayerMessage)
 
@@ -124,22 +130,51 @@ class ConversationEventsHandler(private val plugin: VillagerGPT) : Listener {
                 }
             }
         } catch(e: ProviderException) {
-            val message = Component.text(e.fallbackMessage)
-                .decorate(TextDecoration.ITALIC)
-
-            plugin.logger.warning("Provider ${e.provider} failed. recoverable=${e.recoverable} cause=${e.cause?.message}")
-            plugin.logger.info("Provider metrics: ${plugin.providerMetrics.snapshot(e.provider)}")
-            evt.player.sendMessage(ChatMessageTemplate.withPluginNamePrefix(message))
+            notifyPlayerAndCloseConversation(
+                evt = evt,
+                conversation = conversation,
+                userMessage = e.fallbackMessage,
+                provider = e.provider,
+                errorCode = ERROR_PROVIDER_FAILED,
+                details = "recoverable=${e.recoverable} cause=${e.cause?.message}"
+            )
+            plugin.logger.info("provider_error_metrics errorCode=$ERROR_PROVIDER_FAILED ${plugin.providerMetrics.snapshot(e.provider)}")
         } catch(e: Exception) {
-            val message = Component.text("Something went wrong while getting ")
-                .append(villager.name().color(NamedTextColor.AQUA))
-                .append(Component.text("'s response. Please try again"))
-                .decorate(TextDecoration.ITALIC)
-
-            evt.player.sendMessage(ChatMessageTemplate.withPluginNamePrefix(message))
-            throw(e)
+            notifyPlayerAndCloseConversation(
+                evt = evt,
+                conversation = conversation,
+                userMessage = "Something went wrong while getting a response. Please try again",
+                provider = PROVIDER_UNKNOWN,
+                errorCode = ERROR_UNEXPECTED,
+                details = "cause=${e.message} type=${e::class.simpleName}"
+            )
         } finally {
             conversation.pendingResponse = false
+        }
+    }
+
+    private suspend fun notifyPlayerAndCloseConversation(
+        evt: AsyncChatEvent,
+        conversation: VillagerConversation,
+        userMessage: String,
+        provider: String,
+        errorCode: String,
+        details: String
+    ) {
+        val message = Component.text("$userMessage (code: $errorCode)")
+            .decorate(TextDecoration.ITALIC)
+
+        plugin.logger.warning(
+            "conversation_send_failed errorCode=$errorCode player=${conversation.player.name} " +
+                "villager=${conversation.villager.uniqueId} provider=$provider $details"
+        )
+
+        evt.player.sendMessage(ChatMessageTemplate.withPluginNamePrefix(message))
+
+        withContext(plugin.minecraftDispatcher) {
+            if (!conversation.ended) {
+                plugin.conversationManager.endConversation(conversation)
+            }
         }
     }
 
