@@ -5,7 +5,11 @@ import org.bukkit.entity.Villager
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 
-class VillagerConversationEndEvent(val player: Player, val villager: Villager) : Event() {
+class VillagerConversationEndEvent(
+    val player: Player,
+    val villager: Villager,
+    val conversationId: String
+) : Event() {
     companion object {
         private val handlers = HandlerList()
 

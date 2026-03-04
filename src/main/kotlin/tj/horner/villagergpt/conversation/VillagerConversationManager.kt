@@ -53,6 +53,7 @@ class VillagerConversationManager(private val plugin: VillagerGPT) {
         if (conversation == null) {
             conversation = VillagerConversation(plugin, villager, player)
             conversations.add(conversation)
+            plugin.providerMetrics.recordConversationStarted(conversation.conversationId)
 
             val startEvent = VillagerConversationStartEvent(conversation)
             plugin.server.pluginManager.callEvent(startEvent)
@@ -79,8 +80,9 @@ class VillagerConversationManager(private val plugin: VillagerGPT) {
 
             it.pendingResponse = false
             it.ended = true
-            val endEvent = VillagerConversationEndEvent(it.player, it.villager)
+            val endEvent = VillagerConversationEndEvent(it.player, it.villager, it.conversationId)
             plugin.server.pluginManager.callEvent(endEvent)
+            plugin.providerMetrics.recordConversationEnded(it.conversationId)
         }
 
         conversations.removeAll(conversationsToEnd)

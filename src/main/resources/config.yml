@@ -32,6 +32,16 @@ provider-settings:
 # Log conversation messages to server console, useful for catching abuse
 log-conversations: true
 
+logging:
+  # Root level for plugin logger
+  level: "INFO"
+  # Level for context-rich conversation/provider logs
+  context-level: "INFO"
+  # Level for periodic diagnostics summary
+  summary-level: "INFO"
+  # Interval for observability summary logs (ticks)
+  summary-interval-ticks: 1200
+
 # Either "system" or "user"; configures the type of message the "preamble"
 # will be. "user" is more likely to work with GPT-3.5
 preamble-message-type: user
@@ -62,4 +72,3 @@ environment:
 # Keep villagers aware during conversations so they can move and react
 # Set to true if you don't want them to freeze in place
 villagers-aware-during-conversation: false
-

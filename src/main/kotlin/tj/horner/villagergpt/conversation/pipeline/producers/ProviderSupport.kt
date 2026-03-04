@@ -5,6 +5,7 @@ import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.LongAdder
 import kotlin.math.min
 
@@ -34,6 +35,12 @@ class ProviderMetricsRegistry {
     private val retryCounts = ConcurrentHashMap<String, LongAdder>()
     private val recoverableErrorCounts = ConcurrentHashMap<String, LongAdder>()
     private val nonRecoverableErrorCounts = ConcurrentHashMap<String, LongAdder>()
+    private val activeConversations = AtomicInteger(0)
+    private val sessionMessageCounts = ConcurrentHashMap<String, LongAdder>()
+    private val sessionMessageChars = ConcurrentHashMap<String, LongAdder>()
+    private val completedSessionCount = LongAdder()
+    private val completedSessionMessages = LongAdder()
+    private val completedSessionChars = LongAdder()
 
     fun recordLatency(provider: String, latencyMs: Long) {
         latencyTotals.computeIfAbsent(provider) { LongAdder() }.add(latencyMs)
@@ -52,6 +59,26 @@ class ProviderMetricsRegistry {
         }
     }
 
+    fun recordConversationStarted(conversationId: String) {
+        activeConversations.incrementAndGet()
+        sessionMessageCounts.putIfAbsent(conversationId, LongAdder())
+        sessionMessageChars.putIfAbsent(conversationId, LongAdder())
+    }
+
+    fun recordConversationEnded(conversationId: String) {
+        activeConversations.updateAndGet { current -> if (current > 0) current - 1 else 0 }
+        val messages = sessionMessageCounts.remove(conversationId)?.sum() ?: 0
+        val chars = sessionMessageChars.remove(conversationId)?.sum() ?: 0
+        completedSessionCount.increment()
+        completedSessionMessages.add(messages)
+        completedSessionChars.add(chars)
+    }
+
+    fun recordConversationMessage(conversationId: String, messageLength: Int) {
+        sessionMessageCounts.computeIfAbsent(conversationId) { LongAdder() }.increment()
+        sessionMessageChars.computeIfAbsent(conversationId) { LongAdder() }.add(messageLength.toLong())
+    }
+
     fun snapshot(provider: String): String {
         val totalRequests = requestCounts[provider]?.sum() ?: 0
         val totalLatency = latencyTotals[provider]?.sum() ?: 0
@@ -59,8 +86,26 @@ class ProviderMetricsRegistry {
         val retries = retryCounts[provider]?.sum() ?: 0
         val recoverableErrors = recoverableErrorCounts[provider]?.sum() ?: 0
         val nonRecoverableErrors = nonRecoverableErrorCounts[provider]?.sum() ?: 0
+        val totalErrors = recoverableErrors + nonRecoverableErrors
+        val errorRatePct = if (totalRequests == 0L) 0.0 else (totalErrors.toDouble() / totalRequests.toDouble()) * 100
 
-        return "provider=$provider avgLatencyMs=$averageLatency retries=$retries recoverableErrors=$recoverableErrors nonRecoverableErrors=$nonRecoverableErrors"
+        return "provider=$provider avgLatencyMs=$averageLatency requests=$totalRequests retries=$retries recoverableErrors=$recoverableErrors nonRecoverableErrors=$nonRecoverableErrors errorRatePct=%.2f".format(errorRatePct)
+    }
+
+    fun diagnosticsSummary(provider: String): String {
+        val activeSessionMessages = sessionMessageCounts.values.sumOf { it.sum() }
+        val activeSessionChars = sessionMessageChars.values.sumOf { it.sum() }
+        val completedSessions = completedSessionCount.sum()
+        val completedMessages = completedSessionMessages.sum()
+        val completedChars = completedSessionChars.sum()
+
+        val allMessages = activeSessionMessages + completedMessages
+        val allChars = activeSessionChars + completedChars
+        val totalSessions = activeConversations.get().toLong() + completedSessions
+        val avgMessageSize = if (allMessages == 0L) 0 else allChars / allMessages
+        val avgMessagesPerSession = if (totalSessions == 0L) 0 else allMessages / totalSessions
+
+        return "${snapshot(provider)} activeConversations=${activeConversations.get()} totalMessages=$allMessages avgMessageSizeChars=$avgMessageSize avgMessagesPerSession=$avgMessagesPerSession"
     }
 }
 

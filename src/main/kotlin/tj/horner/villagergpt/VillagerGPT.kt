@@ -19,9 +19,12 @@ import tj.horner.villagergpt.conversation.pipeline.producers.ProviderMetricsRegi
 import tj.horner.villagergpt.conversation.pipeline.producers.ProviderRequestSettings
 import tj.horner.villagergpt.conversation.pipeline.producers.RetrySettings
 import tj.horner.villagergpt.handlers.ConversationEventsHandler
+import tj.horner.villagergpt.observability.ObservabilitySettings
+import tj.horner.villagergpt.observability.readObservabilitySettings
 import tj.horner.villagergpt.tasks.EndStaleConversationsTask
 import tj.horner.villagergpt.tasks.EnvironmentWatcher
 import tj.horner.villagergpt.tasks.GossipManager
+import tj.horner.villagergpt.tasks.ObservabilitySummaryTask
 
 import java.util.logging.Level
 
@@ -31,6 +34,8 @@ class VillagerGPT : SuspendingJavaPlugin() {
 
     val conversationManager = VillagerConversationManager(this)
     val providerMetrics = ProviderMetricsRegistry()
+    lateinit var observabilitySettings: ObservabilitySettings
+        private set
     private val messageProducer = createMessageProducer()
     val messagePipeline = MessageProcessorPipeline(
         messageProducer,
@@ -42,6 +47,8 @@ class VillagerGPT : SuspendingJavaPlugin() {
 
     override suspend fun onEnableAsync() {
         saveDefaultConfig()
+        observabilitySettings = readObservabilitySettings(config)
+        logger.level = observabilitySettings.rootLogLevel
 
         PersistentDataKeys.PERSONALITY = NamespacedKey(this, "personality")
 
@@ -91,7 +98,10 @@ class VillagerGPT : SuspendingJavaPlugin() {
         val envInterval = config.getLong("environment.interval", 20L)
         EnvironmentWatcher(this).runTaskTimer(this, 0L, envInterval)
         GossipManager(this).runTaskTimer(this, 0L, 200L)
+        ObservabilitySummaryTask(this).runTaskTimer(this, 0L, observabilitySettings.summaryIntervalTicks)
     }
+
+    fun providerName(): String = (config.getString("provider") ?: "openai").lowercase()
 
     private fun validateConfig(): Boolean {
         val provider = config.getString("provider") ?: "openai"

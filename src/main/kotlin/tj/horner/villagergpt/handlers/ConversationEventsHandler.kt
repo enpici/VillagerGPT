@@ -22,6 +22,8 @@ import tj.horner.villagergpt.conversation.pipeline.producers.ProviderException
 import tj.horner.villagergpt.events.VillagerConversationEndEvent
 import tj.horner.villagergpt.events.VillagerConversationMessageEvent
 import tj.horner.villagergpt.events.VillagerConversationStartEvent
+import tj.horner.villagergpt.observability.ConversationLogContext
+import tj.horner.villagergpt.observability.logContext
 
 class ConversationEventsHandler(private val plugin: VillagerGPT) : Listener {
     private companion object {
@@ -43,8 +45,8 @@ class ConversationEventsHandler(private val plugin: VillagerGPT) : Listener {
             evt.conversation.villager.isAware = false
         }
         evt.conversation.villager.lookAt(evt.conversation.player)
-
-        plugin.logger.info("Conversation started between ${evt.conversation.player.name} and ${evt.conversation.villager.name}")
+        val context = evt.conversation.logContext(plugin.providerName())
+        plugin.logger.log(plugin.observabilitySettings.contextLogLevel, "conversation_started ${context.asFields()}")
     }
 
     @EventHandler
@@ -60,8 +62,13 @@ class ConversationEventsHandler(private val plugin: VillagerGPT) : Listener {
         if (!plugin.config.getBoolean("villagers-aware-during-conversation")) {
             evt.villager.isAware = true
         }
-
-        plugin.logger.info("Conversation ended between ${evt.player.name} and ${evt.villager.name}")
+        val context = ConversationLogContext(
+            playerId = evt.player.uniqueId.toString(),
+            villagerId = evt.villager.uniqueId.toString(),
+            provider = plugin.providerName(),
+            conversationId = evt.conversationId
+        )
+        plugin.logger.log(plugin.observabilitySettings.contextLogLevel, "conversation_ended ${context.asFields()}")
     }
 
     @EventHandler
@@ -138,7 +145,7 @@ class ConversationEventsHandler(private val plugin: VillagerGPT) : Listener {
                 errorCode = ERROR_PROVIDER_FAILED,
                 details = "recoverable=${e.recoverable} cause=${e.cause?.message}"
             )
-            plugin.logger.info("provider_error_metrics errorCode=$ERROR_PROVIDER_FAILED ${plugin.providerMetrics.snapshot(e.provider)}")
+            plugin.logger.log(plugin.observabilitySettings.contextLogLevel, "provider_error_metrics errorCode=$ERROR_PROVIDER_FAILED ${plugin.providerMetrics.snapshot(e.provider)}")
         } catch(e: Exception) {
             notifyPlayerAndCloseConversation(
                 evt = evt,
@@ -164,10 +171,8 @@ class ConversationEventsHandler(private val plugin: VillagerGPT) : Listener {
         val message = Component.text("$userMessage (code: $errorCode)")
             .decorate(TextDecoration.ITALIC)
 
-        plugin.logger.warning(
-            "conversation_send_failed errorCode=$errorCode player=${conversation.player.name} " +
-                "villager=${conversation.villager.uniqueId} provider=$provider $details"
-        )
+        val context = conversation.logContext(provider)
+        plugin.logger.warning("conversation_send_failed errorCode=$errorCode ${context.asFields()} $details")
 
         evt.player.sendMessage(ChatMessageTemplate.withPluginNamePrefix(message))
 
@@ -181,8 +186,13 @@ class ConversationEventsHandler(private val plugin: VillagerGPT) : Listener {
     @OptIn(BetaOpenAI::class)
     @EventHandler
     fun onConversationMessage(evt: VillagerConversationMessageEvent) {
+        plugin.providerMetrics.recordConversationMessage(
+            evt.conversation.conversationId,
+            evt.message.content.length
+        )
         if (!plugin.config.getBoolean("log-conversations")) return
-        plugin.logger.info("Message between ${evt.conversation.player.name} and ${evt.conversation.villager.name}: ${evt.message}")
+        val context = evt.conversation.logContext(plugin.providerName())
+        plugin.logger.log(plugin.observabilitySettings.contextLogLevel, "conversation_message ${context.asFields()} role=${evt.message.role.role} size=${evt.message.content.length} payload=${evt.message}")
     }
 
     @EventHandler

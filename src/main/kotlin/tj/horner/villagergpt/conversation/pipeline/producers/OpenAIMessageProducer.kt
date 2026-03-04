@@ -11,6 +11,7 @@ import org.bukkit.configuration.Configuration
 import tj.horner.villagergpt.VillagerGPT
 import tj.horner.villagergpt.conversation.VillagerConversation
 import tj.horner.villagergpt.conversation.pipeline.ConversationMessageProducer
+import tj.horner.villagergpt.observability.logContext
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -55,7 +56,11 @@ class OpenAIMessageProducer(
                 }
 
                 plugin.providerMetrics.recordLatency(providerName, duration)
-                plugin.logger.fine("Provider metrics: ${plugin.providerMetrics.snapshot(providerName)}")
+                val context = conversation.logContext(providerName)
+                plugin.logger.log(
+                    plugin.observabilitySettings.contextLogLevel,
+                    "llm_request_completed ${context.asFields()} latencyMs=$duration"
+                )
                 completionMessage
             },
             classifyError = { throwable ->
