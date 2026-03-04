@@ -13,6 +13,22 @@ local-model-url: "http://localhost:8000/"
 # Send conversation to the local model as JSON instead of plain text
 local-model-json: false
 
+# Timeouts, retries and fallback text used by all providers
+provider-settings:
+  # Max time to establish connection with model provider
+  connection-timeout-ms: 5000
+  # Max time to wait for a model response
+  response-timeout-ms: 30000
+  retry:
+    # Total attempts including the first one
+    max-attempts: 3
+    # Backoff delay after first failed attempt
+    base-delay-ms: 500
+    # Upper bound for exponential backoff delay
+    max-delay-ms: 4000
+  # Message shown to players when provider request fails after retries
+  fallback-message: "No pude responder ahora mismo. Inténtalo de nuevo en unos segundos."
+
 # Log conversation messages to server console, useful for catching abuse
 log-conversations: true
 
