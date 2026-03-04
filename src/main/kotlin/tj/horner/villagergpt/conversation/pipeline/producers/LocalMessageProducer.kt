@@ -1,9 +1,11 @@
 package tj.horner.villagergpt.conversation.pipeline.producers
 
+import com.aallam.openai.api.BetaOpenAI
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -12,54 +14,82 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.bukkit.configuration.Configuration
 import tj.horner.villagergpt.VillagerGPT
-import tj.horner.villagergpt.chat.ChatMessageTemplate
 import tj.horner.villagergpt.conversation.VillagerConversation
 import tj.horner.villagergpt.conversation.pipeline.ConversationMessageProducer
-import com.aallam.openai.api.BetaOpenAI
-import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.format.TextDecoration
-import java.util.logging.Level
+import kotlin.system.measureTimeMillis
 
 @OptIn(BetaOpenAI::class)
 class LocalMessageProducer(
     private val plugin: VillagerGPT,
-    config: Configuration
+    config: Configuration,
+    private val requestSettings: ProviderRequestSettings
 ) : ConversationMessageProducer, AutoCloseable {
-    private val client = HttpClient(Apache)
+    private val client = HttpClient(Apache) {
+        engine {
+            socketTimeout = requestSettings.responseTimeoutMs
+            connectTimeout = requestSettings.connectionTimeoutMs
+            connectionRequestTimeout = requestSettings.connectionTimeoutMs
+        }
+    }
     private val endpoint = config.getString("local-model-url") ?: "http://localhost:8000/"
     private val sendJson = config.getBoolean("local-model-json", false)
+    private val providerName = "local"
 
     override suspend fun produceNextMessage(conversation: VillagerConversation): String {
-        return try {
-            val response = if (sendJson) {
-                val payload = buildJsonObject {
-                    put("messages", buildJsonArray {
-                        conversation.messages.forEach {
-                            add(buildJsonObject {
-                                put("role", it.role.role)
-                                put("content", it.content)
+        return withExponentialRetry(
+            provider = providerName,
+            settings = requestSettings,
+            metrics = plugin.providerMetrics,
+            execute = {
+                var responseBody = ""
+                val duration = measureTimeMillis {
+                    val response = if (sendJson) {
+                        val payload = buildJsonObject {
+                            put("messages", buildJsonArray {
+                                conversation.messages.forEach {
+                                    add(buildJsonObject {
+                                        put("role", it.role.role)
+                                        put("content", it.content)
+                                    })
+                                }
                             })
                         }
-                    })
+
+                        client.post(endpoint) {
+                            contentType(ContentType.Application.Json)
+                            setBody(payload.toString())
+                        }
+                    } else {
+                        val payload = conversation.messages.joinToString("\n") { "${it.role}: ${it.content}" }
+                        client.post(endpoint) { setBody(payload) }
+                    }
+
+                    responseBody = parseResponse(response)
                 }
 
-                client.post(endpoint) {
-                    contentType(ContentType.Application.Json)
-                    setBody(payload.toString())
+                plugin.providerMetrics.recordLatency(providerName, duration)
+                plugin.logger.fine("Provider metrics: ${plugin.providerMetrics.snapshot(providerName)}")
+                responseBody
+            },
+            classifyError = { throwable ->
+                if (throwable is LocalProviderHttpException) {
+                    throwable.statusCode == 408 || throwable.statusCode == 429 || throwable.statusCode >= 500
+                } else {
+                    isTransientError(throwable)
                 }
-            } else {
-                val payload = conversation.messages.joinToString("\n") { "${'$'}{it.role}: ${'$'}{it.content}" }
-                client.post(endpoint) { setBody(payload) }
             }
+        )
+    }
 
-            response.bodyAsText()
-        } catch (e: Exception) {
-            plugin.logger.log(Level.WARNING, "Failed to reach local model endpoint: ${'$'}{e.message}")
-            val message = Component.text("Failed to contact local model. Please try again later.")
-                .decorate(TextDecoration.ITALIC)
-            conversation.player.sendMessage(ChatMessageTemplate.withPluginNamePrefix(message))
-            throw e
+    private suspend fun parseResponse(response: HttpResponse): String {
+        val statusCode = response.status.value
+        val body = response.bodyAsText()
+
+        if (statusCode >= 400) {
+            throw LocalProviderHttpException(statusCode, body)
         }
+
+        return body
     }
 
     /**
@@ -69,3 +99,5 @@ class LocalMessageProducer(
         client.close()
     }
 }
+
+class LocalProviderHttpException(val statusCode: Int, message: String) : RuntimeException(message)

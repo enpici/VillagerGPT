@@ -17,6 +17,7 @@ import tj.horner.villagergpt.MetadataKey
 import tj.horner.villagergpt.VillagerGPT
 import tj.horner.villagergpt.chat.ChatMessageTemplate
 import tj.horner.villagergpt.conversation.formatting.MessageFormatter
+import tj.horner.villagergpt.conversation.pipeline.producers.ProviderException
 import tj.horner.villagergpt.events.VillagerConversationEndEvent
 import tj.horner.villagergpt.events.VillagerConversationMessageEvent
 import tj.horner.villagergpt.events.VillagerConversationStartEvent
@@ -122,6 +123,13 @@ class ConversationEventsHandler(private val plugin: VillagerGPT) : Listener {
                     actions.forEach { it.run() }
                 }
             }
+        } catch(e: ProviderException) {
+            val message = Component.text(e.fallbackMessage)
+                .decorate(TextDecoration.ITALIC)
+
+            plugin.logger.warning("Provider ${e.provider} failed. recoverable=${e.recoverable} cause=${e.cause?.message}")
+            plugin.logger.info("Provider metrics: ${plugin.providerMetrics.snapshot(e.provider)}")
+            evt.player.sendMessage(ChatMessageTemplate.withPluginNamePrefix(message))
         } catch(e: Exception) {
             val message = Component.text("Something went wrong while getting ")
                 .append(villager.name().color(NamedTextColor.AQUA))

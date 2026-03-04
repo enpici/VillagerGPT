@@ -15,6 +15,9 @@ import tj.horner.villagergpt.conversation.pipeline.processors.ActionProcessor
 import tj.horner.villagergpt.conversation.pipeline.processors.TradeOfferProcessor
 import tj.horner.villagergpt.conversation.pipeline.producers.OpenAIMessageProducer
 import tj.horner.villagergpt.conversation.pipeline.producers.LocalMessageProducer
+import tj.horner.villagergpt.conversation.pipeline.producers.ProviderMetricsRegistry
+import tj.horner.villagergpt.conversation.pipeline.producers.ProviderRequestSettings
+import tj.horner.villagergpt.conversation.pipeline.producers.RetrySettings
 import tj.horner.villagergpt.handlers.ConversationEventsHandler
 import tj.horner.villagergpt.tasks.EndStaleConversationsTask
 import tj.horner.villagergpt.tasks.EnvironmentWatcher
@@ -27,6 +30,7 @@ class VillagerGPT : SuspendingJavaPlugin() {
         private set
 
     val conversationManager = VillagerConversationManager(this)
+    val providerMetrics = ProviderMetricsRegistry()
     private val messageProducer = createMessageProducer()
     val messagePipeline = MessageProcessorPipeline(
         messageProducer,
@@ -98,7 +102,24 @@ class VillagerGPT : SuspendingJavaPlugin() {
     }
 
     private fun createMessageProducer() = when (config.getString("provider")?.lowercase()) {
-        "local" -> LocalMessageProducer(this, config)
-        else -> OpenAIMessageProducer(config)
+        "local" -> LocalMessageProducer(this, config, readProviderRequestSettings())
+        else -> OpenAIMessageProducer(this, config, readProviderRequestSettings())
+    }
+
+    private fun readProviderRequestSettings(): ProviderRequestSettings {
+        val section = config.getConfigurationSection("provider-settings")
+        val retry = section?.getConfigurationSection("retry")
+
+        return ProviderRequestSettings(
+            connectionTimeoutMs = section?.getInt("connection-timeout-ms") ?: 5000,
+            responseTimeoutMs = section?.getInt("response-timeout-ms") ?: 30000,
+            retrySettings = RetrySettings(
+                maxAttempts = retry?.getInt("max-attempts") ?: 3,
+                baseDelayMs = retry?.getLong("base-delay-ms") ?: 500,
+                maxDelayMs = retry?.getLong("max-delay-ms") ?: 4000
+            ),
+            fallbackMessage = section?.getString("fallback-message")
+                ?: "No pude responder ahora mismo. Inténtalo de nuevo en unos segundos."
+        )
     }
 }
