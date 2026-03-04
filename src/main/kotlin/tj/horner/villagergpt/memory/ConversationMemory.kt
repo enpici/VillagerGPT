@@ -58,11 +58,9 @@ class ConversationMemory(dbFile: String) {
             )
         }
 
-        withWriteConnection { connection ->
-            connection.createStatement().use { stmt ->
-                stmt.execute("PRAGMA journal_mode=WAL")
-                stmt.execute("PRAGMA busy_timeout=5000")
-            }
+        writeConnection.createStatement().use { stmt ->
+            stmt.execute("PRAGMA journal_mode=WAL")
+            stmt.execute("PRAGMA busy_timeout=5000")
         }
     }
 
@@ -242,7 +240,6 @@ class ConversationMemory(dbFile: String) {
 
     private fun openConnection(readOnly: Boolean): Connection {
         val connection = DriverManager.getConnection(jdbcUrl)
-        connection.isReadOnly = readOnly
         connection.createStatement().use { stmt ->
             stmt.execute("PRAGMA busy_timeout=5000")
             if (readOnly) {
