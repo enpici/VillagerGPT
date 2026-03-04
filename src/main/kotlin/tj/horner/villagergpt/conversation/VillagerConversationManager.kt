@@ -77,6 +77,7 @@ class VillagerConversationManager(private val plugin: VillagerGPT) {
 
             }
 
+            it.pendingResponse = false
             it.ended = true
             val endEvent = VillagerConversationEndEvent(it.player, it.villager)
             plugin.server.pluginManager.callEvent(endEvent)
