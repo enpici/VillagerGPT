@@ -80,7 +80,7 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
 
         personality = getPersonality()
 
-        villager.customName = net.kyori.adventure.text.Component.text(villagerName)
+        villager.customName(Component.text(villagerName))
         villager.isCustomNameVisible = true
 
         var messageRole = ChatRole.System
@@ -101,7 +101,7 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
 
 
         val historyLimit = plugin.config.getInt("memory.max-messages", 20)
-        messages.addAll(plugin.memory.loadMessages(villager.uniqueId, historyLimit))
+        messages.addAll(runBlocking { plugin.memory.loadMessages(villager.uniqueId, historyLimit) })
 
 
         val gossipLimit = plugin.config.getInt("gossip.max-entries", 30)

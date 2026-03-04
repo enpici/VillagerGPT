@@ -6,7 +6,16 @@ AI villagers are aware of various aspects of the game world, their reputation wi
 
 ## Requirements
 
-VillagerGPT requires **Java 21** or newer to build and run. Make sure a compatible JDK is installed and selected when compiling the plugin.
+- **JDK 21** (exact version target for compilation and runtime)
+- Gradle Wrapper (`./gradlew`, included in this repository)
+
+CI should provide Java 21 through runner configuration (for example, GitHub Actions `actions/setup-java`) instead of hardcoding `org.gradle.java.home` in `gradle.properties`.
+
+## Build
+
+```bash
+./gradlew clean build
+```
 
 ## Example Conversations
 
