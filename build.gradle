@@ -33,6 +33,10 @@ dependencies {
 
     implementation "org.xerial:sqlite-jdbc:3.45.3.0"
 
+    testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
+    testImplementation "io.mockk:mockk:1.13.10"
+    testImplementation "io.papermc.paper:paper-api:1.19-R0.1-SNAPSHOT"
+
 }
 
 def targetJavaVersion = 21
@@ -66,4 +70,8 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
 tasks.withType(AbstractArchiveTask).configureEach {
     preserveFileTimestamps = false
     reproducibleFileOrder = true
+}
+
+test {
+    useJUnitPlatform()
 }
