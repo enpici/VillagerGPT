@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.8.20'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.24'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
@@ -29,22 +29,21 @@ dependencies {
     implementation platform("com.aallam.openai:openai-client-bom:3.2.1")
     implementation "com.aallam.openai:openai-client"
     implementation "io.ktor:ktor-client-apache"
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3"
 
     implementation "org.xerial:sqlite-jdbc:3.45.3.0"
 
 }
 
-def targetJavaVersion = 17
+def targetJavaVersion = 21
 java {
+    toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     sourceCompatibility = JavaVersion.toVersion(targetJavaVersion)
     targetCompatibility = JavaVersion.toVersion(targetJavaVersion)
-    toolchain.languageVersion = JavaLanguageVersion.of(21)
 }
 
 tasks.withType(JavaCompile).configureEach {
-    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
-        options.release = targetJavaVersion
-    }
+    options.release = targetJavaVersion
 }
 
 processResources {
@@ -57,9 +56,14 @@ processResources {
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(targetJavaVersion)
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-    kotlinOptions.jvmTarget = "17"
+    kotlinOptions.jvmTarget = targetJavaVersion.toString()
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
 }
