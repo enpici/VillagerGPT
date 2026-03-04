@@ -66,11 +66,14 @@ class VillagerGPT : SuspendingJavaPlugin() {
         conversationManager.endAllConversations()
 
         if (messageProducer is AutoCloseable) {
-            messageProducer.close()
+            runCatching { (messageProducer as AutoCloseable).close() }
+                .onFailure { logger.log(Level.WARNING, "Failed to close message producer", it) }
         }
 
-        memory.close()
-
+        if (::memory.isInitialized) {
+            runCatching { memory.close() }
+                .onFailure { logger.log(Level.WARNING, "Failed to close conversation memory", it) }
+        }
     }
 
     private fun setCommandExecutors() {
