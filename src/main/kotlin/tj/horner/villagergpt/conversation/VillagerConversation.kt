@@ -20,6 +20,7 @@ import kotlin.random.Random
 @OptIn(BetaOpenAI::class)
 class VillagerConversation(private val plugin: VillagerGPT, val villager: Villager, val player: Player) {
     private var lastMessageAt: Date = Date()
+    val conversationId: String = UUID.randomUUID().toString()
 
     private lateinit var villagerName: String
     private var villagerSummary: String? = null
