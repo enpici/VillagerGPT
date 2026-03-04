@@ -1,5 +1,7 @@
 # VillagerGPT
 
+[![CI](https://github.com/tjhorner/VillagerGPT/actions/workflows/ci.yml/badge.svg)](https://github.com/tjhorner/VillagerGPT/actions/workflows/ci.yml)
+
 VillagerGPT breathes new life into your server's villagers, allowing players to talk and trade with them using the same technology that powers ChatGPT. Players can have a conversation with any villager and haggle for better deals, or come up with previously impossible trades.
 
 AI villagers are aware of various aspects of the game world, their reputation with players, and they each have their own distinct personality based on their profession and a randomly-chosen personality archetype.
