@@ -19,6 +19,9 @@ import tj.horner.villagergpt.conversation.pipeline.producers.ProviderMetricsRegi
 import tj.horner.villagergpt.conversation.pipeline.producers.ProviderRequestSettings
 import tj.horner.villagergpt.conversation.pipeline.producers.RetrySettings
 import tj.horner.villagergpt.handlers.ConversationEventsHandler
+import tj.horner.villagergpt.config.ConversationSafetySettings
+import tj.horner.villagergpt.config.SecretsResolver
+import tj.horner.villagergpt.config.readConversationSafetySettings
 import tj.horner.villagergpt.observability.ObservabilitySettings
 import tj.horner.villagergpt.observability.readObservabilitySettings
 import tj.horner.villagergpt.tasks.EndStaleConversationsTask
@@ -34,6 +37,8 @@ class VillagerGPT : SuspendingJavaPlugin() {
 
     val conversationManager = VillagerConversationManager(this)
     val providerMetrics = ProviderMetricsRegistry()
+    lateinit var conversationSafetySettings: ConversationSafetySettings
+        private set
     lateinit var observabilitySettings: ObservabilitySettings
         private set
     private val messageProducer = createMessageProducer()
@@ -48,6 +53,7 @@ class VillagerGPT : SuspendingJavaPlugin() {
     override suspend fun onEnableAsync() {
         saveDefaultConfig()
         observabilitySettings = readObservabilitySettings(config)
+        conversationSafetySettings = readConversationSafetySettings(config)
         logger.level = observabilitySettings.rootLogLevel
 
         PersistentDataKeys.PERSONALITY = NamespacedKey(this, "personality")
@@ -109,14 +115,19 @@ class VillagerGPT : SuspendingJavaPlugin() {
             val url = config.getString("local-model-url") ?: return false
             url.trim().isNotEmpty()
         } else {
-            val openAiKey = config.getString("openai-key") ?: return false
-            openAiKey.trim().isNotEmpty()
+            val openAiKey = SecretsResolver.resolveOpenAiKey(config) ?: return false
+            openAiKey.isNotEmpty()
         }
     }
 
     private fun createMessageProducer() = when (config.getString("provider")?.lowercase()) {
         "local" -> LocalMessageProducer(this, config, readProviderRequestSettings())
-        else -> OpenAIMessageProducer(this, config, readProviderRequestSettings())
+        else -> OpenAIMessageProducer(
+            this,
+            config,
+            readProviderRequestSettings(),
+            SecretsResolver.resolveOpenAiKey(config).orEmpty()
+        )
     }
 
     private fun readProviderRequestSettings(): ProviderRequestSettings {

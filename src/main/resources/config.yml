@@ -1,11 +1,14 @@
 # Use "openai" to talk to the OpenAI API or "local" to use a locally hosted model.
 provider: "openai"
 
-# Obtain a key here: https://platform.openai.com
+# Environment variable that stores your OpenAI API key.
+# Example: export OPENAI_API_KEY="..."
+openai-key-env-var: "OPENAI_API_KEY"
+
+# If you still use openai-key in config, it's treated as legacy fallback.
 openai-key: ""
 
 # If you have GPT-4 access, it is highly recommended to use it here.
-# Switch this to "gpt-4" if you do.
 openai-model: "gpt-3.5-turbo"
 
 # URL for your locally hosted model's endpoint.
@@ -15,60 +18,47 @@ local-model-json: false
 
 # Timeouts, retries and fallback text used by all providers
 provider-settings:
-  # Max time to establish connection with model provider
   connection-timeout-ms: 5000
-  # Max time to wait for a model response
   response-timeout-ms: 30000
   retry:
-    # Total attempts including the first one
     max-attempts: 3
-    # Backoff delay after first failed attempt
     base-delay-ms: 500
-    # Upper bound for exponential backoff delay
     max-delay-ms: 4000
-  # Message shown to players when provider request fails after retries
   fallback-message: "No pude responder ahora mismo. Inténtalo de nuevo en unos segundos."
+
+# Controls to reduce abuse and runaway session cost
+safety:
+  # Min interval between messages from same player in a conversation
+  player-cooldown-ms: 1500
+  # Max characters accepted in one player input
+  max-input-length: 280
+  # Session message budget per conversation
+  session-max-player-messages: 24
+  # Session character budget per conversation
+  session-max-player-chars: 6000
 
 # Log conversation messages to server console, useful for catching abuse
 log-conversations: true
 
 logging:
-  # Root level for plugin logger
   level: "INFO"
-  # Level for context-rich conversation/provider logs
   context-level: "INFO"
-  # Level for periodic diagnostics summary
   summary-level: "INFO"
-  # Interval for observability summary logs (ticks)
   summary-interval-ticks: 1200
 
-# Either "system" or "user"; configures the type of message the "preamble"
-# will be. "user" is more likely to work with GPT-3.5
+# Either "system" or "user"; configures the type of message the "preamble" will be.
 preamble-message-type: user
 
-
-# Conversation memory settings
 memory:
-  # Path to SQLite database file. Relative paths are relative to the plugin data folder
   db-path: memory.db
-  # Maximum number of messages to remember per villager
   max-messages: 20
-  # Villager names and summaries are stored here as well
 
 gossip:
-  # Distance in blocks within which villagers will exchange gossip
   radius: 10
-  # Maximum number of gossip entries stored per villager
   max-entries: 30
 
-# Watch the environment during conversations and narrate changes
 environment:
-  # Distance in blocks in which to watch for nearby mobs or players
   environment-radius: 5
-  # How often to check the environment, in ticks
   interval: 20
 
-
-# Keep villagers aware during conversations so they can move and react
-# Set to true if you don't want them to freeze in place
 villagers-aware-during-conversation: false

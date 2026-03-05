@@ -29,6 +29,9 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
     val messages = mutableListOf<ChatMessage>()
     var pendingResponse = false
     var ended = false
+    var playerMessagesInSession = 0
+    var playerCharsInSession = 0
+    var lastPlayerMessageAtMs = 0L
 
     init {
         startConversation()

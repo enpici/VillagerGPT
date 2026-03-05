@@ -105,6 +105,14 @@ class ConversationEventsHandler(private val plugin: VillagerGPT) : Listener {
         evt.player.removeMetadata(MetadataKey.SelectingVillager, plugin)
     }
 
+    private fun logThrottleEvent(conversation: VillagerConversation, rule: String, details: String) {
+        val context = conversation.logContext(plugin.providerName())
+        plugin.logger.log(
+            plugin.observabilitySettings.contextLogLevel,
+            "conversation_throttled ${context.asFields()} rule=$rule $details"
+        )
+    }
+
     @EventHandler
     suspend fun onSendMessage(evt: AsyncChatEvent) {
         val conversation = plugin.conversationManager.getConversation(evt.player) ?: return
@@ -120,12 +128,72 @@ class ConversationEventsHandler(private val plugin: VillagerGPT) : Listener {
             return
         }
 
+        val playerMessage = PlainTextComponentSerializer.plainText().serialize(evt.originalMessage()).trim()
+        val safety = plugin.conversationSafetySettings
+        val now = System.currentTimeMillis()
+        val elapsed = now - conversation.lastPlayerMessageAtMs
+
+        if (conversation.lastPlayerMessageAtMs != 0L && elapsed < safety.playerCooldownMs) {
+            val waitMs = safety.playerCooldownMs - elapsed
+            evt.player.sendMessage(
+                ChatMessageTemplate.withPluginNamePrefix(
+                    Component.text("Slow down. Wait ${waitMs}ms before your next message.")
+                        .decorate(TextDecoration.ITALIC)
+                )
+            )
+            logThrottleEvent(conversation, "cooldown", "waitMs=$waitMs")
+            return
+        }
+
+        if (playerMessage.isEmpty() || playerMessage.length > safety.maxInputLength) {
+            evt.player.sendMessage(
+                ChatMessageTemplate.withPluginNamePrefix(
+                    Component.text("Message length must be between 1 and ${safety.maxInputLength} characters.")
+                        .decorate(TextDecoration.ITALIC)
+                )
+            )
+            logThrottleEvent(conversation, "input_length", "size=${playerMessage.length} max=${safety.maxInputLength}")
+            return
+        }
+
+        if (conversation.playerMessagesInSession >= safety.sessionMaxPlayerMessages) {
+            evt.player.sendMessage(
+                ChatMessageTemplate.withPluginNamePrefix(
+                    Component.text("Session message budget exceeded. End this conversation and start a new one.")
+                        .decorate(TextDecoration.ITALIC)
+                )
+            )
+            logThrottleEvent(
+                conversation,
+                "session_message_budget",
+                "count=${conversation.playerMessagesInSession} max=${safety.sessionMaxPlayerMessages}"
+            )
+            return
+        }
+
+        if (conversation.playerCharsInSession + playerMessage.length > safety.sessionMaxPlayerChars) {
+            evt.player.sendMessage(
+                ChatMessageTemplate.withPluginNamePrefix(
+                    Component.text("Session character budget exceeded. End this conversation and start a new one.")
+                        .decorate(TextDecoration.ITALIC)
+                )
+            )
+            logThrottleEvent(
+                conversation,
+                "session_char_budget",
+                "used=${conversation.playerCharsInSession} incoming=${playerMessage.length} max=${safety.sessionMaxPlayerChars}"
+            )
+            return
+        }
+
         conversation.pendingResponse = true
+        conversation.lastPlayerMessageAtMs = now
+        conversation.playerMessagesInSession += 1
+        conversation.playerCharsInSession += playerMessage.length
 
         try {
             val pipeline = plugin.messagePipeline
 
-            val playerMessage = PlainTextComponentSerializer.plainText().serialize(evt.originalMessage())
             val formattedPlayerMessage = MessageFormatter.formatMessageFromPlayer(Component.text(playerMessage), conversation.villager)
 
             evt.player.sendMessage(formattedPlayerMessage)

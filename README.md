@@ -72,10 +72,21 @@ AI villagers also have one of these randomly selected personalities:
 ## Configuration
 
 The plugin can operate in two modes controlled by the `provider` option in `config.yml`.
-When set to `openai`, an OpenAI API key is required. Obtain one [here](https://platform.openai.com/) and place it under `openai-key` in the config.
+When set to `openai`, an OpenAI API key is required. Obtain one [here](https://platform.openai.com/) and set it in an environment variable (default: `OPENAI_API_KEY`). You can change the environment variable name with `openai-key-env-var` in `config.yml`.
 If `provider` is set to `local`, VillagerGPT will POST the current conversation to the URL defined by `local-model-url` and use the response as the villager's reply.
 
 Set `villagers-aware-during-conversation` to `true` if you want villagers to keep moving while talking.
+
+### Abuse controls and session budget
+
+To prevent spam and runaway usage costs, `config.yml` includes a `safety` section:
+
+- `safety.player-cooldown-ms`: minimum wait time between player messages in one conversation
+- `safety.max-input-length`: maximum characters accepted in one message
+- `safety.session-max-player-messages`: total player messages allowed in one conversation
+- `safety.session-max-player-chars`: total player characters allowed in one conversation
+
+When any limit is hit, VillagerGPT rejects the message and logs a `conversation_throttled` event with context for monitoring.
 
 ### GPT-4
 
