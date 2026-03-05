@@ -25,6 +25,9 @@ jobs:
       - name: Clean build and static checks
         run: ./gradlew --no-daemon clean check build
 
+      - name: Plugin conversation command/state tests
+        run: ./gradlew --no-daemon test --tests '*CommandFlowMockBukkitTest' --tests '*VillagerConversationManagerStateTest' --tests '*ConversationEventsHandlerTest'
+
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
