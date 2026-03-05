@@ -6,11 +6,16 @@ import tj.horner.villagergpt.conversation.VillagerConversation
 import tj.horner.villagergpt.conversation.pipeline.ConversationMessageAction
 import tj.horner.villagergpt.conversation.pipeline.ConversationMessageProcessor
 import tj.horner.villagergpt.conversation.pipeline.ConversationMessageTransformer
+import tj.horner.villagergpt.conversation.pathfinding.VillagerPoiLocator
+import tj.horner.villagergpt.conversation.pipeline.actions.PathfindToPlayerAction
+import tj.horner.villagergpt.conversation.pipeline.actions.PathfindToPoiAction
 import tj.horner.villagergpt.conversation.pipeline.actions.PlaySoundAction
 import tj.horner.villagergpt.conversation.pipeline.actions.ShakeHeadAction
 
 class ActionProcessor : ConversationMessageProcessor, ConversationMessageTransformer {
     private val actionRegex = Regex("ACTION:([A-Z_]+)")
+    private val poiSearchRadius = 32
+    private val pathSpeed = 1.0
 
     override fun processMessage(
         message: String,
@@ -35,6 +40,22 @@ class ActionProcessor : ConversationMessageProcessor, ConversationMessageTransfo
             "SOUND_YES" -> PlaySoundAction(conversation.player, conversation.villager, villagerSound("entity.villager.yes"))
             "SOUND_NO" -> PlaySoundAction(conversation.player, conversation.villager, villagerSound("entity.villager.no"))
             "SOUND_AMBIENT" -> PlaySoundAction(conversation.player, conversation.villager, villagerSound("entity.villager.ambient"))
+            "PATHFIND_PLAYER" -> PathfindToPlayerAction(conversation.villager, conversation.player, pathSpeed)
+            "PATHFIND_BED" -> PathfindToPoiAction(
+                conversation.villager,
+                destinationProvider = { VillagerPoiLocator.nearestBed(conversation.villager, poiSearchRadius) },
+                speed = pathSpeed
+            )
+            "PATHFIND_WORKSTATION" -> PathfindToPoiAction(
+                conversation.villager,
+                destinationProvider = { VillagerPoiLocator.nearestWorkstation(conversation.villager, poiSearchRadius) },
+                speed = pathSpeed
+            )
+            "PATHFIND_MEETING_POINT" -> PathfindToPoiAction(
+                conversation.villager,
+                destinationProvider = { VillagerPoiLocator.nearestMeetingPoint(conversation.villager, poiSearchRadius) },
+                speed = pathSpeed
+            )
             else -> null
         }
     }
