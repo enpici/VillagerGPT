@@ -18,11 +18,12 @@ import kotlin.time.Duration.Companion.milliseconds
 class OpenAIMessageProducer(
     private val plugin: VillagerGPT,
     config: Configuration,
-    private val requestSettings: ProviderRequestSettings
+    private val requestSettings: ProviderRequestSettings,
+    apiKey: String
 ) : ConversationMessageProducer {
     private val openAI = OpenAI(
         OpenAIConfig(
-            token = config.getString("openai-key")!!,
+            token = apiKey,
             logLevel = LogLevel.None,
             timeout = Timeout(
                 request = requestSettings.responseTimeoutMs.milliseconds,
