@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import tj.horner.villagergpt.conversation.VillagerConversation
+import tj.horner.villagergpt.conversation.pipeline.actions.PathfindToPlayerAction
+import tj.horner.villagergpt.conversation.pipeline.actions.PathfindToPoiAction
 import tj.horner.villagergpt.conversation.pipeline.actions.PlaySoundAction
 import tj.horner.villagergpt.conversation.pipeline.actions.ShakeHeadAction
 
@@ -24,12 +26,14 @@ class ActionProcessorTest {
         val processor = ActionProcessor()
 
         val actions = processor.processMessage(
-            "hola ACTION:SHAKE_HEAD ACTION:SOUND_YES ACTION:SOUND_AMBIENT",
+            "hola ACTION:SHAKE_HEAD ACTION:SOUND_YES ACTION:SOUND_AMBIENT ACTION:PATHFIND_PLAYER ACTION:PATHFIND_BED",
             conversation
         )
 
-        assertEquals(3, actions.size)
+        assertEquals(5, actions.size)
         assertTrue(actions.any { it is ShakeHeadAction })
+        assertTrue(actions.any { it is PathfindToPlayerAction })
+        assertTrue(actions.any { it is PathfindToPoiAction })
         val soundActions = actions.filterIsInstance<PlaySoundAction>()
         assertEquals(2, soundActions.size)
     }

@@ -13,6 +13,7 @@ import tj.horner.villagergpt.events.VillagerConversationMessageEvent
 import net.kyori.adventure.text.Component
 import org.bukkit.persistence.PersistentDataType
 import tj.horner.villagergpt.conversation.VillagerNameGenerator
+import tj.horner.villagergpt.conversation.formatting.NavigationFormatter
 import java.time.Duration
 import java.util.*
 import kotlin.random.Random
@@ -119,6 +120,13 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
         val biome = world.getBiome(villager.location)
         val time = if (world.isDayTime) "Day" else "Night"
         val playerRep = getPlayerRepScore()
+        val villagerLocation = villager.location
+        val playerLocation = player.location
+        val villagerCoords = NavigationFormatter.formatCoordinates(villagerLocation.x, villagerLocation.y, villagerLocation.z)
+        val playerCoords = NavigationFormatter.formatCoordinates(playerLocation.x, playerLocation.y, playerLocation.z)
+        val playerDirection = NavigationFormatter.describeDirection(villagerLocation.x, villagerLocation.z, playerLocation.x, playerLocation.z)
+        val playerDistance = NavigationFormatter.estimateDistance(villagerLocation.x, villagerLocation.z, playerLocation.x, playerLocation.z)
+        val routeHint = NavigationFormatter.buildRouteHint(villagerLocation.x, villagerLocation.z, playerLocation.x, playerLocation.z)
 
         plugin.logger.info("$villagerName is $personality")
 
@@ -159,13 +167,26 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
         - SOUND_YES: Play a happy sound to the player
         - SOUND_NO: Play a sad/angry sound to the player
         - SOUND_AMBIENT: Play an ambient villager sound to the player
-        
+        - PATHFIND_PLAYER: Walk to the player
+        - PATHFIND_BED: Find and walk to the nearest bed
+        - PATHFIND_WORKSTATION: Find and walk to your profession workstation
+        - PATHFIND_MEETING_POINT: Find and walk to the nearest village bell
+
+        Use pathfinding actions when movement matters in the conversation (sleeping, starting work, regrouping at the bell, or physically approaching the player).
         To perform one of these actions, include "ACTION:{action name}" in your response.
 
         World information:
         - Time: $time
         - Weather: $weather
         - Biome: ${biome.name}
+
+        Navigation and orientation:
+        - Your coordinates: $villagerCoords
+        - Player coordinates: $playerCoords
+        - Player direction from you: $playerDirection
+        - Approximate distance to player: $playerDistance blocks
+        - Suggested route to the player: $routeHint
+        - Give directions using cardinal points (north/south/east/west), short step-by-step routes, and nearby landmarks when possible
 
         Player information:
         - Name: ${player.name}
