@@ -28,14 +28,25 @@ import tj.horner.villagergpt.tasks.EndStaleConversationsTask
 import tj.horner.villagergpt.tasks.EnvironmentWatcher
 import tj.horner.villagergpt.tasks.GossipManager
 import tj.horner.villagergpt.tasks.ObservabilitySummaryTask
+import tj.horner.villagergpt.api.VillagerContext
+import tj.horner.villagergpt.api.VillagerContextProvider
+import tj.horner.villagergpt.api.VillagerGPTService
+import tj.horner.villagergpt.conversation.pipeline.ConversationMessageAction
+import tj.horner.villagergpt.environment.VanillaVillagerContextProvider
+import org.bukkit.entity.Player
+import org.bukkit.entity.Villager
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 import java.util.logging.Level
 
-class VillagerGPT : SuspendingJavaPlugin() {
+class VillagerGPT : SuspendingJavaPlugin(), VillagerGPTService {
     lateinit var memory: ConversationMemory
         private set
 
     val conversationManager = VillagerConversationManager(this)
+    private val villagerEventFeed = ConcurrentHashMap<UUID, ArrayDeque<String>>()
+    @Volatile private var contextProvider: VillagerContextProvider? = null
     val providerMetrics = ProviderMetricsRegistry()
     lateinit var conversationSafetySettings: ConversationSafetySettings
         private set
@@ -62,6 +73,7 @@ class VillagerGPT : SuspendingJavaPlugin() {
         val dbFile = if (java.io.File(dbPath).isAbsolute) java.io.File(dbPath) else java.io.File(dataFolder, dbPath)
         dbFile.parentFile.mkdirs()
         memory = ConversationMemory(dbFile.path)
+        contextProvider = VanillaVillagerContextProvider(villagerEventFeed)
 
 
         if (!validateConfig()) {
@@ -71,6 +83,7 @@ class VillagerGPT : SuspendingJavaPlugin() {
 
         setCommandExecutors()
         registerEvents()
+        server.servicesManager.register(VillagerGPTService::class.java, this, this, org.bukkit.plugin.ServicePriority.Normal)
         scheduleTasks()
     }
 
@@ -87,6 +100,8 @@ class VillagerGPT : SuspendingJavaPlugin() {
             runCatching { memory.close() }
                 .onFailure { logger.log(Level.WARNING, "Failed to close conversation memory", it) }
         }
+
+        server.servicesManager.unregister(VillagerGPTService::class.java, this)
     }
 
     private fun setCommandExecutors() {
@@ -108,6 +123,41 @@ class VillagerGPT : SuspendingJavaPlugin() {
     }
 
     fun providerName(): String = (config.getString("provider") ?: "openai").lowercase()
+
+    fun setContextProvider(provider: VillagerContextProvider?) {
+        contextProvider = provider
+    }
+
+    fun resolveContext(villager: Villager): VillagerContext {
+        val provider = contextProvider ?: VanillaVillagerContextProvider(villagerEventFeed)
+        return runCatching { provider.getContext(villager) }
+            .getOrElse {
+                logger.log(Level.WARNING, "Context provider failed for ${villager.uniqueId}. Falling back to vanilla context.", it)
+                VanillaVillagerContextProvider(villagerEventFeed).getContext(villager)
+            }
+    }
+
+    override fun startConversation(player: Player, villager: Villager) =
+        conversationManager.startConversation(player, villager)
+
+    override suspend fun generateDialogue(villager: Villager, player: Player, message: String): Iterable<ConversationMessageAction> {
+        val conversation = conversationManager.startConversation(player, villager) ?: conversationManager.getConversation(player)
+        requireNotNull(conversation) { "Unable to start or resolve a conversation for player ${player.uniqueId}" }
+        return messagePipeline.run(message, conversation)
+    }
+
+    override fun notifyEvent(villager: Villager, eventDescription: String) {
+        val queue = villagerEventFeed.computeIfAbsent(villager.uniqueId) { ArrayDeque() }
+        synchronized(queue) {
+            queue.addLast(eventDescription)
+            while (queue.size > 20) {
+                queue.removeFirst()
+            }
+        }
+
+        val maxEntries = config.getInt("gossip.max-entries", 30)
+        memory.addGossip(villager.uniqueId, listOf(eventDescription), maxEntries)
+    }
 
     private fun validateConfig(): Boolean {
         val provider = config.getString("provider") ?: "openai"
