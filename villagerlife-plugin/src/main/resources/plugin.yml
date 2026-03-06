@@ -7,7 +7,7 @@ softdepend: [Citizens, WorldEdit]
 commands:
   villagerlife:
     description: Administration command for VillagerLife
-    usage: /villagerlife <createvillage|register|debug|setrole|build|status>
+    usage: /villagerlife <createvillage|register|debug|setrole|build|status|buildstatus>
     permission: villagerlife.admin
 permissions:
   villagerlife.admin:

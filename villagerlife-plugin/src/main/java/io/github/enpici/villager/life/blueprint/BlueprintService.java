@@ -54,10 +54,12 @@ public class BlueprintService {
     private static final int MAX_SCHEMATIC_BLOCKS = 1_000_000;
 
     private final JavaPlugin plugin;
+    private final BuildTelemetry buildTelemetry;
     private final Map<String, BlueprintDefinition> blueprints = new ConcurrentHashMap<>();
 
-    public BlueprintService(JavaPlugin plugin) {
+    public BlueprintService(JavaPlugin plugin, BuildTelemetry buildTelemetry) {
         this.plugin = plugin;
+        this.buildTelemetry = buildTelemetry;
     }
 
     public void loadFromDisk() {
@@ -159,23 +161,44 @@ public class BlueprintService {
     }
 
     public boolean placeStructure(String id, VillageAI village, Agent builder, Location location) {
+        long startedAt = System.currentTimeMillis();
+        String normalizedId = id != null ? id.toLowerCase(Locale.ROOT) : null;
+        java.util.UUID villageId = village != null ? village.id() : null;
+        java.util.UUID agentUuid = builder != null ? builder.villagerUuid() : null;
+        buildTelemetry.logBuildStarted(villageId, agentUuid, normalizedId);
+
         if (location == null || village == null || id == null || id.isBlank()) {
+            String reason = "invalid_arguments";
             plugin.getLogger().warning("Build cancelado: argumentos inválidos para placeStructure.");
+            buildTelemetry.logBuildFailed(villageId, agentUuid, normalizedId, 0, elapsed(startedAt), reason);
             return false;
         }
 
         Optional<BlueprintDefinition> definitionOpt = find(id);
         if (definitionOpt.isEmpty()) {
+            String reason = "blueprint_not_found";
             plugin.getLogger().warning("Build cancelado: blueprint no encontrado: " + id);
+            buildTelemetry.logBuildFailed(villageId, agentUuid, normalizedId, 0, elapsed(startedAt), reason);
             return false;
         }
 
-        boolean pasted = pasteInstant(definitionOpt.get(), village, builder, location);
+        BuildMode mode = resolveBuildMode();
+        if (mode == BuildMode.GRANULAR) {
+            String reason = "granular_not_implemented";
+            plugin.getLogger().warning("build.mode=GRANULAR todavía no implementado. Saltando build de " + id);
+            buildTelemetry.logBuildFailed(villageId, agentUuid, normalizedId, 0, elapsed(startedAt), reason);
+            return false;
+        }
+
+        buildTelemetry.logBuildStep(villageId, agentUuid, normalizedId, 1, elapsed(startedAt));
+        boolean pasted = pasteInstant(definitionOpt.get(), village, builder, location, startedAt, villageId, agentUuid);
         if (pasted) {
-            Bukkit.getPluginManager().callEvent(new VillageStructureBuiltEvent(village, id, 0L, 0, 0));
+            buildTelemetry.logBuildCompleted(villageId, agentUuid, normalizedId, 4, elapsed(startedAt));
+            Bukkit.getPluginManager().callEvent(new VillageStructureBuiltEvent(village, id));
         }
         return pasted;
     }
+
 
 
     public Optional<BuildPlan> prepareBuildPlan(String id, VillageAI village, Agent builder, Location location) {
@@ -251,37 +274,54 @@ public class BlueprintService {
                 .orElse(false);
     }
 
-    private boolean pasteInstant(BlueprintDefinition definition, VillageAI village, Agent builder, Location destination) {
+  private boolean pasteInstant(BlueprintDefinition definition, VillageAI village, Agent builder, Location destination,
+
+                                 long startedAt, java.util.UUID villageId, java.util.UUID agentUuid) {
+
+        buildTelemetry.logBuildStep(villageId, agentUuid, definition.id(), 2, elapsed(startedAt));
+
+
         if (!validateWorldAndChunk(destination)) {
+            buildTelemetry.logBuildFailed(villageId, agentUuid, definition.id(), 2, elapsed(startedAt), "world_or_chunk_unavailable");
             return false;
         }
         if (!validateRegionEditPermissions(destination)) {
+            buildTelemetry.logBuildFailed(villageId, agentUuid, definition.id(), 2, elapsed(startedAt), "region_denied");
             return false;
         }
 
         for (int attempt = 1; attempt <= MAX_IO_RETRIES + 1; attempt++) {
             try {
                 Clipboard clipboard = readClipboard(definition.schemFile());
+                buildTelemetry.logBuildStep(villageId, agentUuid, definition.id(), 3, elapsed(startedAt));
                 if (!validateSchematicSize(clipboard, definition.id())) {
+                    buildTelemetry.logBuildFailed(villageId, agentUuid, definition.id(), 3, elapsed(startedAt), "schematic_too_large");
                     return false;
                 }
 
                 Map<Material, Integer> requiredMaterials = collectRequiredMaterials(clipboard);
                 MaterialConsumptionResult consumption = consumeMaterials(requiredMaterials, village, builder);
                 if (!consumption.successful()) {
+                    buildTelemetry.logBuildFailed(villageId, agentUuid, definition.id(), 3, elapsed(startedAt), "insufficient_materials_or_sources");
                     return false;
                 }
 
+                buildTelemetry.logBuildStep(villageId, agentUuid, definition.id(), 4, elapsed(startedAt));
                 boolean pasted = pasteClipboard(clipboard, destination, definition.id());
                 if (!pasted) {
                     rollbackConsumption(consumption.consumedItems());
+                    buildTelemetry.logBuildFailed(villageId, agentUuid, definition.id(), 4, elapsed(startedAt), "worldedit_paste_failed");
                 }
                 return pasted;
             } catch (IOException ioException) {
                 plugin.getLogger().warning("Error I/O leyendo schematic '" + definition.id() + "' intento "
                         + attempt + "/" + (MAX_IO_RETRIES + 1) + ": " + ioException.getMessage());
+                if (attempt <= MAX_IO_RETRIES) {
+                    buildTelemetry.incrementRetry();
+                }
                 if (attempt > MAX_IO_RETRIES) {
                     plugin.getLogger().severe("Build cancelado: schematic corrupto o ilegible para '" + definition.id() + "'.");
+                    buildTelemetry.logBuildFailed(villageId, agentUuid, definition.id(), 3, elapsed(startedAt), "schematic_io_error");
                     return false;
                 }
             }
@@ -557,6 +597,25 @@ public class BlueprintService {
             return false;
         }
         return true;
+    }
+
+
+    public BuildTelemetry telemetry() {
+        return buildTelemetry;
+    }
+
+    private long elapsed(long startedAt) {
+        return Math.max(0L, System.currentTimeMillis() - startedAt);
+    }
+
+    private BuildMode resolveBuildMode() {
+        String raw = plugin.getConfig().getString("build.mode", BuildMode.INSTANT.name());
+        try {
+            return BuildMode.valueOf(raw.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ignored) {
+            plugin.getLogger().warning("build.mode inválido '" + raw + "'. Se usa INSTANT.");
+            return BuildMode.INSTANT;
+        }
     }
 
     private BlueprintDefinition loadDefinition(String id, File schemFile) {

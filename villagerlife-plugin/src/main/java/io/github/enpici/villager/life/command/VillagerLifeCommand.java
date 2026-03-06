@@ -5,6 +5,7 @@ import io.github.enpici.villager.life.agent.AgentManager;
 import io.github.enpici.villager.life.blueprint.BlueprintService;
 import io.github.enpici.villager.life.event.AgentRoleChangedEvent;
 import io.github.enpici.villager.life.role.AgentRole;
+import io.github.enpici.villager.life.village.VillageAI;
 import io.github.enpici.villager.life.village.VillageManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -14,12 +15,18 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
 public class VillagerLifeCommand implements CommandExecutor, TabCompleter {
+
+    private static final DateTimeFormatter TS_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            .withZone(ZoneId.systemDefault());
 
     private final AgentManager agentManager;
     private final VillageManager villageManager;
@@ -34,7 +41,7 @@ public class VillagerLifeCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
-            sender.sendMessage("/villagerlife <createvillage|register|debug|setrole|build|status>");
+            sender.sendMessage("/villagerlife <createvillage|register|debug|setrole|build|status|buildstatus>");
             return true;
         }
 
@@ -46,6 +53,7 @@ public class VillagerLifeCommand implements CommandExecutor, TabCompleter {
             case "setrole" -> handleSetRole(sender, args);
             case "build" -> handleBuild(sender, args);
             case "status" -> handleStatus(sender);
+            case "buildstatus" -> handleBuildStatus(sender, args);
             default -> sender.sendMessage("Subcomando desconocido: " + sub);
         }
         return true;
@@ -129,6 +137,59 @@ public class VillagerLifeCommand implements CommandExecutor, TabCompleter {
                 " beds=" + village.bedCount() + " agents=" + agentManager.size());
     }
 
+    private void handleBuildStatus(CommandSender sender, String[] args) {
+        if (args.length > 1 && "reset".equalsIgnoreCase(args[1])) {
+            blueprintService.telemetry().resetCountersAndErrors();
+            sender.sendMessage("Build telemetry reseteada (éxitos/fallos/reintentos/errores recientes).");
+            return;
+        }
+
+        VillageAI village = villageManager.currentVillage().orElse(null);
+        var counters = blueprintService.telemetry().snapshotCounters();
+        sender.sendMessage("[BuildStatus] counters success=" + counters.successful()
+                + " failed=" + counters.failed() + " retries=" + counters.retries());
+
+        if (village == null) {
+            sender.sendMessage("[BuildStatus] No hay aldea activa.");
+        } else {
+            List<String> queuePreview = village.pendingBlueprintsSnapshot(5);
+            sender.sendMessage("[BuildStatus] villageId=" + village.id() + " queueSize=" + village.pendingBlueprintCount()
+                    + " queuePreview=" + queuePreview);
+
+            List<Agent> builders = agentManager.all().stream()
+                    .filter(agent -> agent.role() == AgentRole.BUILDER || agent.role() == AgentRole.LEADER)
+                    .toList();
+            if (builders.isEmpty()) {
+                sender.sendMessage("[BuildStatus] No hay builders/leader asignados.");
+            } else {
+                String progress = builders.stream()
+                        .map(agent -> "agentUuid=" + agent.villagerUuid() + ":task="
+                                + (agent.activeTask() != null ? agent.activeTask().id() : "idle"))
+                        .reduce((left, right) -> left + " | " + right)
+                        .orElse("-");
+                sender.sendMessage("[BuildStatus] progress " + progress);
+            }
+        }
+
+        List<io.github.enpici.villager.life.blueprint.BuildTelemetry.BuildFailureRecord> failures =
+                blueprintService.telemetry().recentFailuresSnapshot(5);
+        if (failures.isEmpty()) {
+            sender.sendMessage("[BuildStatus] recentErrors=none");
+            return;
+        }
+
+        sender.sendMessage("[BuildStatus] recentErrors=" + failures.size());
+        for (var failure : failures) {
+            sender.sendMessage("- ts=" + TS_FORMAT.format(Instant.ofEpochMilli(failure.timestampMs()))
+                    + " villageId=" + failure.villageId()
+                    + " agentUuid=" + failure.agentUuid()
+                    + " blueprintId=" + failure.blueprintId()
+                    + " stepIndex=" + failure.stepIndex()
+                    + " elapsedMs=" + failure.elapsedMs()
+                    + " reason=" + failure.reason());
+        }
+    }
+
     private Agent resolveAgent(CommandSender sender, String identifier) {
         if (identifier != null) {
             try {
@@ -152,7 +213,10 @@ public class VillagerLifeCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return List.of("createvillage", "register", "debug", "setrole", "build", "status");
+            return List.of("createvillage", "register", "debug", "setrole", "build", "status", "buildstatus");
+        }
+        if (args.length == 2 && "buildstatus".equalsIgnoreCase(args[0])) {
+            return List.of("reset");
         }
         if (args.length == 3 && "setrole".equalsIgnoreCase(args[0])) {
             return Arrays.stream(AgentRole.values()).map(Enum::name).toList();

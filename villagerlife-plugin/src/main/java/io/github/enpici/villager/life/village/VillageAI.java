@@ -12,6 +12,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
 import java.util.ArrayDeque;
+import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
 
@@ -120,6 +121,17 @@ public class VillageAI {
             return;
         }
         pendingQuickBlueprints.offer(normalized);
+    }
+
+    public int pendingBlueprintCount() {
+        return pendingBlueprints.size();
+    }
+
+    public List<String> pendingBlueprintsSnapshot(int limit) {
+        if (limit <= 0) {
+            return List.of();
+        }
+        return pendingBlueprints.stream().limit(limit).toList();
     }
 
     public void ensureBasicNeedsForGrowth() {

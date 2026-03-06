@@ -2,6 +2,7 @@ package io.github.enpici.villager.life;
 
 import io.github.enpici.villager.life.agent.AgentManager;
 import io.github.enpici.villager.life.ai.DecisionEngine;
+import io.github.enpici.villager.life.blueprint.BuildTelemetry;
 import io.github.enpici.villager.life.blueprint.BlueprintService;
 import io.github.enpici.villager.life.command.VillagerLifeCommand;
 import io.github.enpici.villager.life.integration.CitizensAdapter;
@@ -19,6 +20,7 @@ public final class VillagerLifePlugin extends JavaPlugin {
     private AgentManager agentManager;
     private VillageManager villageManager;
     private BlueprintService blueprintService;
+    private BuildTelemetry buildTelemetry;
     private SimulationScheduler simulationScheduler;
     private VillagerLifeContextProvider contextProvider;
     private CitizensAdapter citizensAdapter;
@@ -35,7 +37,8 @@ public final class VillagerLifePlugin extends JavaPlugin {
 
         this.agentManager = new AgentManager(citizensIntegrationEnabled ? citizensAdapter : null);
         this.villageManager = new VillageManager();
-        this.blueprintService = new BlueprintService(this);
+        this.buildTelemetry = new BuildTelemetry(this);
+        this.blueprintService = new BlueprintService(this, buildTelemetry);
         blueprintService.loadFromDisk();
 
         var decisionEngine = new DecisionEngine();
