@@ -3,6 +3,7 @@ version: ${project.version}
 main: io.github.enpici.villager.life.VillagerLifePlugin
 api-version: '1.21'
 description: Villager autonomous simulation plugin for the Villager suite.
+softdepend: [Citizens, WorldEdit]
 commands:
   villagerlife:
     description: Administration command for VillagerLife
