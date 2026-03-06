@@ -17,20 +17,17 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-          cache: gradle
-
-      - name: Grant execute permission for Gradle wrapper
-        run: chmod +x gradlew
+          cache: maven
 
       - name: Clean build and static checks
-        run: ./gradlew --no-daemon clean check build
+        run: mvn -B clean verify
 
       - name: Plugin conversation command/state tests
-        run: ./gradlew --no-daemon test --tests '*CommandFlowMockBukkitTest' --tests '*VillagerConversationManagerStateTest' --tests '*ConversationEventsHandlerTest'
+        run: mvn -B -Dtest='*CommandFlowMockBukkitTest,*VillagerConversationManagerStateTest,*ConversationEventsHandlerTest' test
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: villagergpt-jar
-          path: build/libs/*.jar
+          path: target/*.jar
           if-no-files-found: error
