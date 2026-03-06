@@ -19,15 +19,22 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Clean build and static checks
+      - name: Clean build and tests (multi-module)
         run: mvn -B clean verify
 
       - name: Plugin conversation command/state tests
-        run: mvn -B -Dtest='*CommandFlowMockBukkitTest,*VillagerConversationManagerStateTest,*ConversationEventsHandlerTest' test
+        run: mvn -B -pl villagergpt-plugin -Dtest='*CommandFlowMockBukkitTest,*VillagerConversationManagerStateTest,*ConversationEventsHandlerTest' test
 
-      - name: Upload JAR artifact
+      - name: Upload VillagerGPT JAR artifact
         uses: actions/upload-artifact@v4
         with:
-          name: villagergpt-jar
-          path: target/*.jar
+          name: villagergpt-plugin-jar
+          path: villagergpt-plugin/target/*.jar
+          if-no-files-found: error
+
+      - name: Upload VillagerLife JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: villagerlife-plugin-jar
+          path: villagerlife-plugin/target/*.jar
           if-no-files-found: error

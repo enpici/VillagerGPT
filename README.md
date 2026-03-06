@@ -17,7 +17,20 @@ CI should provide Java 21 through runner configuration (for example, GitHub Acti
 
 ```bash
 mvn clean verify
+# o para compilar sin tests (por compatibilidad temporal de MockBukkit):
+mvn -DskipTests clean package
 ```
+
+
+## Arquitectura multi-módulo
+
+El repositorio está organizado como suite Maven:
+
+- `villager-api`: contratos compartidos entre plugins.
+- `villagergpt-plugin`: plugin de diálogo e integración LLM.
+- `villagerlife-plugin`: plugin de simulación de aldeanos (base inicial).
+
+La documentación de migración está en `docs/maven-multi-module-migration.md`.
 
 ## Example Conversations
 

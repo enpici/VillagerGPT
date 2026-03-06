@@ -30,8 +30,8 @@ import tj.horner.villagergpt.tasks.GossipManager
 import tj.horner.villagergpt.tasks.ObservabilitySummaryTask
 import tj.horner.villagergpt.api.VillagerContext
 import tj.horner.villagergpt.api.VillagerContextProvider
+import tj.horner.villagergpt.api.VillagerDialogueAction
 import tj.horner.villagergpt.api.VillagerGPTService
-import tj.horner.villagergpt.conversation.pipeline.ConversationMessageAction
 import tj.horner.villagergpt.environment.VanillaVillagerContextProvider
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
@@ -138,12 +138,12 @@ class VillagerGPT : SuspendingJavaPlugin(), VillagerGPTService {
     }
 
     override fun startConversation(player: Player, villager: Villager) =
-        conversationManager.startConversation(player, villager)
+        conversationManager.startConversation(player, villager) != null
 
-    override suspend fun generateDialogue(villager: Villager, player: Player, message: String): Iterable<ConversationMessageAction> {
+    override suspend fun generateDialogue(villager: Villager, player: Player, message: String): Iterable<VillagerDialogueAction> {
         val conversation = conversationManager.startConversation(player, villager) ?: conversationManager.getConversation(player)
         requireNotNull(conversation) { "Unable to start or resolve a conversation for player ${player.uniqueId}" }
-        return messagePipeline.run(message, conversation)
+        return messagePipeline.run(message, conversation).map { action -> VillagerDialogueAction { action.run() } }
     }
 
     override fun notifyEvent(villager: Villager, eventDescription: String) {
