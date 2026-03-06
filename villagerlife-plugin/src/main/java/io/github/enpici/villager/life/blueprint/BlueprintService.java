@@ -1,20 +1,14 @@
 package io.github.enpici.villager.life.blueprint;
 
-import com.sk89q.worldedit.EditSession;
-import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
-import com.sk89q.worldedit.function.operation.Operation;
-import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.math.BlockVector3;
-import com.sk89q.worldedit.world.World;
 import io.github.enpici.villager.life.agent.Agent;
 import io.github.enpici.villager.life.build.BlockPlacementStep;
 import io.github.enpici.villager.life.build.BuildPlan;
 import io.github.enpici.villager.life.event.VillageStructureBuiltEvent;
+import io.github.enpici.villager.life.integration.DefaultWorldEditGateway;
+import io.github.enpici.villager.life.integration.WorldEditGateway;
 import io.github.enpici.villager.life.village.VillageAI;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
@@ -30,7 +24,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.ArrayDeque;
@@ -55,11 +48,17 @@ public class BlueprintService {
 
     private final JavaPlugin plugin;
     private final BuildTelemetry buildTelemetry;
+    private final WorldEditGateway worldEditGateway;
     private final Map<String, BlueprintDefinition> blueprints = new ConcurrentHashMap<>();
 
-    public BlueprintService(JavaPlugin plugin, BuildTelemetry buildTelemetry) {
+    public BlueprintService(JavaPlugin plugin, BuildTelemetry buildTelemetry, WorldEditGateway worldEditGateway) {
         this.plugin = plugin;
         this.buildTelemetry = buildTelemetry;
+        this.worldEditGateway = worldEditGateway;
+    }
+
+    public BlueprintService(JavaPlugin plugin, BuildTelemetry buildTelemetry) {
+        this(plugin, buildTelemetry, new DefaultWorldEditGateway());
     }
 
     public void loadFromDisk() {
@@ -96,7 +95,7 @@ public class BlueprintService {
                 .findFirst();
     }
 
-    public Optional<BuildPlan> extractBuildPlan(String id, Location origin) {
+    public Optional<io.github.enpici.villager.life.build.BuildPlan> extractBuildPlan(String id, Location origin) {
         if (origin == null || origin.getWorld() == null) {
             return Optional.empty();
         }
@@ -107,7 +106,7 @@ public class BlueprintService {
         }
 
         try {
-            Clipboard clipboard = readClipboard(definition.get().schemFile());
+            Clipboard clipboard = worldEditGateway.readClipboard(definition.get().schemFile());
             if (!validateSchematicSize(clipboard, definition.get().id())) {
                 return Optional.empty();
             }
@@ -147,7 +146,7 @@ public class BlueprintService {
                 List<Integer> prerequisites = i == 0 ? List.of() : List.of(i - 1);
                 steps.add(new BlockPlacementStep(rawSteps.get(i).material(), rawSteps.get(i).position(), prerequisites));
             }
-            return Optional.of(new BuildPlan(steps));
+            return Optional.of(new io.github.enpici.villager.life.build.BuildPlan(steps));
         } catch (IOException ex) {
             plugin.getLogger().warning("No se pudo extraer build plan de " + id + ": " + ex.getMessage());
             return Optional.empty();
@@ -194,7 +193,7 @@ public class BlueprintService {
         boolean pasted = pasteInstant(definitionOpt.get(), village, builder, location, startedAt, villageId, agentUuid);
         if (pasted) {
             buildTelemetry.logBuildCompleted(villageId, agentUuid, normalizedId, 4, elapsed(startedAt));
-            Bukkit.getPluginManager().callEvent(new VillageStructureBuiltEvent(village, id));
+            Bukkit.getPluginManager().callEvent(new VillageStructureBuiltEvent(village, id, elapsed(startedAt), 0, 0));
         }
         return pasted;
     }
@@ -219,7 +218,7 @@ public class BlueprintService {
         }
 
         try {
-            Clipboard clipboard = readClipboard(definition.schemFile());
+            Clipboard clipboard = worldEditGateway.readClipboard(definition.schemFile());
             if (!validateSchematicSize(clipboard, definition.id())) {
                 return Optional.empty();
             }
@@ -292,7 +291,7 @@ public class BlueprintService {
 
         for (int attempt = 1; attempt <= MAX_IO_RETRIES + 1; attempt++) {
             try {
-                Clipboard clipboard = readClipboard(definition.schemFile());
+                Clipboard clipboard = worldEditGateway.readClipboard(definition.schemFile());
                 buildTelemetry.logBuildStep(villageId, agentUuid, definition.id(), 3, elapsed(startedAt));
                 if (!validateSchematicSize(clipboard, definition.id())) {
                     buildTelemetry.logBuildFailed(villageId, agentUuid, definition.id(), 3, elapsed(startedAt), "schematic_too_large");
@@ -327,18 +326,6 @@ public class BlueprintService {
             }
         }
         return false;
-    }
-
-    private Clipboard readClipboard(File schemFile) throws IOException {
-        ClipboardFormat format = ClipboardFormats.findByFile(schemFile);
-        if (format == null) {
-            throw new IOException("Formato schematic no soportado: " + schemFile.getName());
-        }
-
-        try (FileInputStream inputStream = new FileInputStream(schemFile);
-             ClipboardReader reader = format.getReader(inputStream)) {
-            return reader.read();
-        }
     }
 
     private Map<Material, Integer> collectRequiredMaterials(Clipboard clipboard) {
@@ -526,25 +513,11 @@ public class BlueprintService {
     }
 
     private boolean pasteClipboard(Clipboard clipboard, Location destination, String blueprintId) {
-        World world = BukkitAdapter.adapt(destination.getWorld());
-        BlockVector3 to = BlockVector3.at(destination.getBlockX(), destination.getBlockY(), destination.getBlockZ());
-
-        try (EditSession editSession = WorldEdit.getInstance()
-                .newEditSessionBuilder()
-                .world(world)
-                .maxBlocks(MAX_SCHEMATIC_BLOCKS)
-                .build()) {
-            Operation operation = new com.sk89q.worldedit.session.ClipboardHolder(clipboard)
-                    .createPaste(editSession)
-                    .to(to)
-                    .ignoreAirBlocks(false)
-                    .build();
-            Operations.complete(operation);
-            return true;
-        } catch (Exception exception) {
-            plugin.getLogger().severe("Falló paste WE para blueprint '" + blueprintId + "': " + exception.getMessage());
-            return false;
+        boolean pasted = worldEditGateway.pasteClipboard(clipboard, destination, MAX_SCHEMATIC_BLOCKS, blueprintId);
+        if (!pasted) {
+            plugin.getLogger().severe("Falló paste WE para blueprint '" + blueprintId + "'.");
         }
+        return pasted;
     }
 
     public boolean placeBlockAt(BlockPlacementStep step) {
@@ -657,6 +630,12 @@ public class BlueprintService {
         }
 
         return new BlueprintDefinition(id, schemFile, type, 0, tags);
+    }
+
+
+    private enum BuildMode {
+        INSTANT,
+        GRANULAR
     }
 
     private record RawStep(Material material, Location position, int y, int perimeterScore) {

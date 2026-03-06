@@ -3,7 +3,7 @@ package io.github.enpici.villager.life.task.impl;
 import io.github.enpici.villager.life.VillagerLifePlugin;
 import io.github.enpici.villager.life.agent.Agent;
 import io.github.enpici.villager.life.agent.NeedType;
-import io.github.enpici.villager.life.integration.CitizensAdapter;
+import io.github.enpici.villager.life.integration.CitizensGateway;
 import io.github.enpici.villager.life.task.BaseTask;
 import io.github.enpici.villager.life.task.TaskStatus;
 import io.github.enpici.villager.life.village.VillageAI;
@@ -24,7 +24,7 @@ public class HarvestTask extends BaseTask {
     protected TaskStatus onTick(Agent agent, VillageAI villageAI) {
         VillagerLifePlugin plugin = VillagerLifePlugin.instance();
         if (plugin != null && plugin.isCitizensIntegrationEnabled()) {
-            CitizensAdapter adapter = plugin.citizensAdapter();
+            CitizensGateway adapter = plugin.citizensAdapter();
             Villager villager = agent.resolveVillager();
             if (villager != null && adapter.getOrCreateNpc(villager) != null) {
                 adapter.playSwingAnimation();

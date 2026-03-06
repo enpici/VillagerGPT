@@ -6,6 +6,7 @@ import io.github.enpici.villager.life.blueprint.BuildTelemetry;
 import io.github.enpici.villager.life.blueprint.BlueprintService;
 import io.github.enpici.villager.life.command.VillagerLifeCommand;
 import io.github.enpici.villager.life.integration.CitizensAdapter;
+import io.github.enpici.villager.life.integration.CitizensGateway;
 import io.github.enpici.villager.life.integration.VillagerLifeContextProvider;
 import io.github.enpici.villager.life.scheduler.SimulationScheduler;
 import io.github.enpici.villager.life.village.VillageManager;
@@ -23,7 +24,7 @@ public final class VillagerLifePlugin extends JavaPlugin {
     private BuildTelemetry buildTelemetry;
     private SimulationScheduler simulationScheduler;
     private VillagerLifeContextProvider contextProvider;
-    private CitizensAdapter citizensAdapter;
+    private CitizensGateway citizensAdapter;
     private boolean citizensIntegrationEnabled;
 
     @Override
@@ -76,7 +77,7 @@ public final class VillagerLifePlugin extends JavaPlugin {
         return citizensIntegrationEnabled;
     }
 
-    public CitizensAdapter citizensAdapter() {
+    public CitizensGateway citizensAdapter() {
         return citizensAdapter;
     }
 

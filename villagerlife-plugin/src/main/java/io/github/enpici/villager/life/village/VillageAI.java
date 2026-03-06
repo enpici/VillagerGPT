@@ -124,14 +124,16 @@ public class VillageAI {
     }
 
     public int pendingBlueprintCount() {
-        return pendingBlueprints.size();
+        return pendingQuickBlueprints.size() + pendingLongBlueprints.size();
     }
 
     public List<String> pendingBlueprintsSnapshot(int limit) {
         if (limit <= 0) {
             return List.of();
         }
-        return pendingBlueprints.stream().limit(limit).toList();
+        List<String> snapshot = new java.util.ArrayList<>(pendingQuickBlueprints);
+        snapshot.addAll(pendingLongBlueprints);
+        return snapshot.stream().limit(limit).toList();
     }
 
     public void ensureBasicNeedsForGrowth() {

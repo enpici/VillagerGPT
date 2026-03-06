@@ -6,7 +6,7 @@ import io.github.enpici.villager.life.build.BlockPlacementStep;
 import io.github.enpici.villager.life.build.BuildExecutor;
 import io.github.enpici.villager.life.build.BuildPlan;
 import io.github.enpici.villager.life.event.VillageStructureBuiltEvent;
-import io.github.enpici.villager.life.integration.CitizensAdapter;
+import io.github.enpici.villager.life.integration.CitizensGateway;
 import io.github.enpici.villager.life.task.BaseTask;
 import io.github.enpici.villager.life.task.TaskStatus;
 import io.github.enpici.villager.life.village.VillageAI;
@@ -99,7 +99,7 @@ public class BuildStructureTask extends BaseTask {
             return TaskStatus.RUNNING;
         }
 
-        CitizensAdapter citizens = VillagerLifePlugin.instance().citizensAdapter();
+        CitizensGateway citizens = VillagerLifePlugin.instance().citizensAdapter();
         if (VillagerLifePlugin.instance().isCitizensIntegrationEnabled() && citizens != null) {
             NPC npc = citizens.getOrCreateNpc(villager);
             if (npc != null) {
@@ -122,7 +122,7 @@ public class BuildStructureTask extends BaseTask {
             return TaskStatus.RUNNING;
         }
 
-        CitizensAdapter citizens = VillagerLifePlugin.instance().citizensAdapter();
+        CitizensGateway citizens = VillagerLifePlugin.instance().citizensAdapter();
         if (citizens != null) {
             citizens.playSwingAnimation();
         }

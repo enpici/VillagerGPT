@@ -160,7 +160,7 @@ public class SimulationScheduler {
             if (item.totalSteps == 0) {
                 item.status = TaskStatus.SUCCESS;
                 item.finished = true;
-                Bukkit.getPluginManager().callEvent(new VillageStructureBuiltEvent(village, item.blueprintId));
+                Bukkit.getPluginManager().callEvent(new VillageStructureBuiltEvent(village, item.blueprintId, 0L, item.placedSteps, 0));
                 return 1;
             }
         }
@@ -207,7 +207,7 @@ public class SimulationScheduler {
         if (item.plan.pendingSteps().isEmpty()) {
             item.finished = true;
             item.status = TaskStatus.SUCCESS;
-            Bukkit.getPluginManager().callEvent(new VillageStructureBuiltEvent(village, item.blueprintId));
+            Bukkit.getPluginManager().callEvent(new VillageStructureBuiltEvent(village, item.blueprintId, 0L, item.placedSteps, 0));
         }
 
         return Math.max(1, processed);
