@@ -3,6 +3,7 @@ package io.github.enpici.villager.life.village;
 import io.github.enpici.villager.life.agent.Agent;
 import io.github.enpici.villager.life.agent.AgentManager;
 import io.github.enpici.villager.life.blueprint.BlueprintService;
+import io.github.enpici.villager.life.blueprint.BuildingType;
 import io.github.enpici.villager.life.event.VillageFoodLowEvent;
 import io.github.enpici.villager.life.event.VillagerBornEvent;
 import io.github.enpici.villager.life.role.AgentRole;
@@ -88,10 +89,15 @@ public class VillageAI {
     public void planVillage() {
         if (foodStock < 10) {
             Bukkit.getPluginManager().callEvent(new VillageFoodLowEvent(this, foodStock));
+            blueprintService.findFirstByType(BuildingType.FOOD_STORAGE)
+                    .ifPresent(definition -> pendingBlueprints.offer(definition.id()));
         }
 
         if (bedCount < population()) {
-            pendingBlueprints.offer("house_small");
+            String houseBlueprint = blueprintService.findFirstByType(BuildingType.HOUSE)
+                    .map(definition -> definition.id())
+                    .orElse("house_small");
+            pendingBlueprints.offer(houseBlueprint);
         }
     }
 
