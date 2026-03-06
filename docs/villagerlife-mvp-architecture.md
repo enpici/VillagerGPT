@@ -125,3 +125,24 @@ io.github.enpici.villager.life
 - Plugin compila y arranca con comando administrativo.
 - Arquitectura preparada para extensión sin acoplarse a implementación interna de VillagerGPT.
 - Eventos definidos para interoperabilidad con otros plugins.
+
+## 11) Blueprint typing y metadata (nuevo)
+
+- Cada `.schem` puede tener un archivo hermano `<id>.yml` con metadata de dominio.
+- Campos soportados:
+  - `type`: `HOUSE`, `FOOD_STORAGE`, `MATERIAL_STORAGE`, `WORKSTATION_HUB`, `DEFENSIVE`, `GENERIC`.
+  - `capacity`: entero opcional para planificación futura.
+  - `tags`: lista de etiquetas libres.
+- Si el `.yml` no existe, el sistema usa heurística por nombre de blueprint (ej. `house_*`, `food_*`, `warehouse_*`) para clasificar.
+- El planner de aldea ya puede pedir blueprints por tipo (`HOUSE`, `FOOD_STORAGE`) en lugar de depender siempre de IDs hardcodeados.
+
+Ejemplo (`blueprints/warehouse_food.yml`):
+
+```yaml
+type: FOOD_STORAGE
+capacity: 64
+tags:
+  - food
+  - storage
+```
+
