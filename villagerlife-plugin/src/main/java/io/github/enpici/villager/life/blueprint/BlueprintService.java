@@ -19,6 +19,7 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Container;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Villager;
 import org.bukkit.inventory.Inventory;
@@ -29,7 +30,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -110,6 +113,80 @@ public class BlueprintService {
             Bukkit.getPluginManager().callEvent(new VillageStructureBuiltEvent(village, id));
         }
         return pasted;
+    }
+
+
+    public Optional<BuildPlan> prepareBuildPlan(String id, VillageAI village, Agent builder, Location location) {
+        if (location == null || village == null || id == null || id.isBlank()) {
+            plugin.getLogger().warning("Build cancelado: argumentos inválidos para prepareBuildPlan.");
+            return Optional.empty();
+        }
+
+        Optional<BlueprintDefinition> definitionOpt = find(id);
+        if (definitionOpt.isEmpty()) {
+            plugin.getLogger().warning("Build cancelado: blueprint no encontrado: " + id);
+            return Optional.empty();
+        }
+
+        BlueprintDefinition definition = definitionOpt.get();
+        if (!validateWorldAndChunk(location) || !validateRegionEditPermissions(location)) {
+            return Optional.empty();
+        }
+
+        try {
+            Clipboard clipboard = readClipboard(definition.schemFile());
+            if (!validateSchematicSize(clipboard, definition.id())) {
+                return Optional.empty();
+            }
+
+            Map<Material, Integer> requiredMaterials = collectRequiredMaterials(clipboard);
+            MaterialConsumptionResult consumption = consumeMaterials(requiredMaterials, village, builder);
+            if (!consumption.successful()) {
+                return Optional.empty();
+            }
+
+            ArrayDeque<BuildStep> steps = new ArrayDeque<>();
+            BlockVector3 min = clipboard.getRegion().getMinimumPoint();
+            for (BlockVector3 position : clipboard.getRegion()) {
+                var block = clipboard.getBlock(position);
+                Material material;
+                BlockData blockData;
+                try {
+                    material = BukkitAdapter.adapt(block.getBlockType());
+                    blockData = BukkitAdapter.adapt(block);
+                } catch (Exception ignored) {
+                    continue;
+                }
+                if (material == null || material.isAir()) {
+                    continue;
+                }
+                int offsetX = position.x() - min.x();
+                int offsetY = position.y() - min.y();
+                int offsetZ = position.z() - min.z();
+                Location stepLocation = location.clone().add(offsetX, offsetY, offsetZ);
+                steps.add(new BuildStep(stepLocation, material, blockData));
+            }
+            return Optional.of(new BuildPlan(definition.id(), definition.type(), definition.tags(), steps, consumption.consumedItems()));
+        } catch (IOException ioException) {
+            plugin.getLogger().warning("Error I/O preparando build '" + definition.id() + "': " + ioException.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    public void rollbackMaterials(List<ConsumedItem> consumedItems) {
+        rollbackConsumption(consumedItems);
+    }
+
+    public boolean isLongBuild(String blueprintId) {
+        return find(blueprintId)
+                .map(def -> def.tags().contains("long") || def.tags().contains("large") || def.type() == BuildingType.DEFENSIVE)
+                .orElse(false);
+    }
+
+    public boolean isCriticalBuild(String blueprintId) {
+        return find(blueprintId)
+                .map(def -> def.tags().contains("critical"))
+                .orElse(false);
     }
 
     private boolean pasteInstant(BlueprintDefinition definition, VillageAI village, Agent builder, Location destination) {
@@ -459,6 +536,13 @@ public class BlueprintService {
     private enum BuildMode {
         INSTANT,
         GRANULAR
+    }
+
+
+    public record BuildStep(Location location, Material material, BlockData blockData) {
+    }
+
+    public record BuildPlan(String blueprintId, BuildingType type, Set<String> tags, Deque<BuildStep> pendingSteps, List<ConsumedItem> consumedItems) {
     }
 
     private record ConsumedItem(Inventory inventory, ItemStack item) {
