@@ -9,14 +9,23 @@ public class VillageStructureBuiltEvent extends Event {
 
     private final VillageAI village;
     private final String blueprintId;
+    private final long totalTicks;
+    private final int placedBlocks;
+    private final int failedBlocks;
 
-    public VillageStructureBuiltEvent(VillageAI village, String blueprintId) {
+    public VillageStructureBuiltEvent(VillageAI village, String blueprintId, long totalTicks, int placedBlocks, int failedBlocks) {
         this.village = village;
         this.blueprintId = blueprintId;
+        this.totalTicks = totalTicks;
+        this.placedBlocks = placedBlocks;
+        this.failedBlocks = failedBlocks;
     }
 
     public VillageAI village() { return village; }
     public String blueprintId() { return blueprintId; }
+    public long totalTicks() { return totalTicks; }
+    public int placedBlocks() { return placedBlocks; }
+    public int failedBlocks() { return failedBlocks; }
 
     @Override
     public HandlerList getHandlers() { return HANDLERS; }
