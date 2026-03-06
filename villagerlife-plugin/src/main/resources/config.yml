@@ -20,5 +20,7 @@ build:
   max-retries: 2
   rollback-critical-blocks: 16
   progress-event-interval-ticks: 20
+  granular:
+    ticks-per-block: 5
 integration:
   citizens-enabled: true
