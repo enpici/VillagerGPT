@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class CitizensAdapter {
+public class CitizensAdapter implements CitizensGateway {
 
     private final Map<UUID, Integer> villagerNpcMap = new ConcurrentHashMap<>();
     private NPC currentNpc;

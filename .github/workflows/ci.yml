@@ -25,6 +25,9 @@ jobs:
       - name: Plugin conversation command/state tests
         run: mvn -B -pl villagergpt-plugin -Dtest='*CommandFlowMockBukkitTest,*VillagerConversationManagerStateTest,*ConversationEventsHandlerTest' test
 
+      - name: VillagerLife blueprint/build task tests
+        run: mvn -B -pl villagerlife-plugin -am -Dtest='*BlueprintMetadataLoadTest,*BuildPlanSelectionTest,*BuildStructureTaskStateTransitionTest,*BlueprintWorldEditFallbackRegressionTest' test
+
       - name: Upload VillagerGPT JAR artifact
         uses: actions/upload-artifact@v4
         with:

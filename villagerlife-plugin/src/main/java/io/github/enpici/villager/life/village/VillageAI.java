@@ -227,9 +227,9 @@ public class VillageAI {
         if (limit <= 0) {
             return List.of();
         }
-        List<String> combined = new ArrayList<>(pendingQuickBlueprints);
-        combined.addAll(pendingLongBlueprints);
-        return combined.stream().limit(limit).toList();
+        List<String> snapshot = new java.util.ArrayList<>(pendingQuickBlueprints);
+        snapshot.addAll(pendingLongBlueprints);
+        return snapshot.stream().limit(limit).toList();
     }
 
     public void ensureBasicNeedsForGrowth() {

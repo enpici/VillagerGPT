@@ -1,6 +1,6 @@
 package io.github.enpici.villager.life.agent;
 
-import io.github.enpici.villager.life.integration.CitizensAdapter;
+import io.github.enpici.villager.life.integration.CitizensGateway;
 import io.github.enpici.villager.life.role.AgentRole;
 import net.citizensnpcs.api.npc.NPC;
 import org.bukkit.entity.Villager;
@@ -15,9 +15,9 @@ public class AgentManager {
 
     private final Map<UUID, Agent> agents = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> villagerToNpcId = new ConcurrentHashMap<>();
-    private final CitizensAdapter citizensAdapter;
+    private final CitizensGateway citizensAdapter;
 
-    public AgentManager(CitizensAdapter citizensAdapter) {
+    public AgentManager(CitizensGateway citizensAdapter) {
         this.citizensAdapter = citizensAdapter;
     }
 
