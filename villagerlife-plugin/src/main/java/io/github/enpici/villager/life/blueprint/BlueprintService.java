@@ -12,13 +12,17 @@ import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.world.World;
 import io.github.enpici.villager.life.agent.Agent;
+import io.github.enpici.villager.life.build.BlockPlacementStep;
+import io.github.enpici.villager.life.build.BuildPlan;
 import io.github.enpici.villager.life.event.VillageStructureBuiltEvent;
 import io.github.enpici.villager.life.village.VillageAI;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.block.Container;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Villager;
 import org.bukkit.inventory.Inventory;
@@ -29,7 +33,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Deque;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -89,6 +96,70 @@ public class BlueprintService {
                 .findFirst();
     }
 
+    public Optional<BuildPlan> extractBuildPlan(String id, Location origin) {
+        if (origin == null || origin.getWorld() == null) {
+            return Optional.empty();
+        }
+
+        Optional<BlueprintDefinition> definition = find(id);
+        if (definition.isEmpty()) {
+            return Optional.empty();
+        }
+
+        try {
+            Clipboard clipboard = readClipboard(definition.get().schemFile());
+            if (!validateSchematicSize(clipboard, definition.get().id())) {
+                return Optional.empty();
+            }
+
+            BlockVector3 min = clipboard.getMinimumPoint();
+            BlockVector3 dimensions = clipboard.getDimensions();
+            List<RawStep> rawSteps = new ArrayList<>();
+            for (int y = 0; y < dimensions.y(); y++) {
+                for (int x = 0; x < dimensions.x(); x++) {
+                    for (int z = 0; z < dimensions.z(); z++) {
+                        BlockVector3 position = min.add(x, y, z);
+                        var state = clipboard.getBlock(position);
+                        if (state.getBlockType().getMaterial().isAir()) {
+                            continue;
+                        }
+                        Material material = BukkitAdapter.adapt(state.getBlockType());
+                        if (material.isAir()) {
+                            continue;
+                        }
+
+                        int perimeterScore = perimeterScore(x, z, dimensions.x(), dimensions.z());
+                        Location worldPos = new Location(origin.getWorld(),
+                                origin.getBlockX() + x,
+                                origin.getBlockY() + y,
+                                origin.getBlockZ() + z);
+                        rawSteps.add(new RawStep(material, worldPos, y, perimeterScore));
+                    }
+                }
+            }
+
+            rawSteps.sort(Comparator
+                    .comparingInt(RawStep::y)
+                    .thenComparingInt(RawStep::perimeterScore));
+
+            List<BlockPlacementStep> steps = new ArrayList<>(rawSteps.size());
+            for (int i = 0; i < rawSteps.size(); i++) {
+                List<Integer> prerequisites = i == 0 ? List.of() : List.of(i - 1);
+                steps.add(new BlockPlacementStep(rawSteps.get(i).material(), rawSteps.get(i).position(), prerequisites));
+            }
+            return Optional.of(new BuildPlan(steps));
+        } catch (IOException ex) {
+            plugin.getLogger().warning("No se pudo extraer build plan de " + id + ": " + ex.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    private int perimeterScore(int x, int z, int maxX, int maxZ) {
+        int dx = Math.min(x, maxX - 1 - x);
+        int dz = Math.min(z, maxZ - 1 - z);
+        return Math.min(dx, dz);
+    }
+
     public boolean placeStructure(String id, VillageAI village, Agent builder, Location location) {
         long startedAt = System.currentTimeMillis();
         String normalizedId = id != null ? id.toLowerCase(Locale.ROOT) : null;
@@ -128,9 +199,88 @@ public class BlueprintService {
         return pasted;
     }
 
-    private boolean pasteInstant(BlueprintDefinition definition, VillageAI village, Agent builder, Location destination,
+
+
+    public Optional<BuildPlan> prepareBuildPlan(String id, VillageAI village, Agent builder, Location location) {
+        if (location == null || village == null || id == null || id.isBlank()) {
+            plugin.getLogger().warning("Build cancelado: argumentos inválidos para prepareBuildPlan.");
+            return Optional.empty();
+        }
+
+        Optional<BlueprintDefinition> definitionOpt = find(id);
+        if (definitionOpt.isEmpty()) {
+            plugin.getLogger().warning("Build cancelado: blueprint no encontrado: " + id);
+            return Optional.empty();
+        }
+
+        BlueprintDefinition definition = definitionOpt.get();
+        if (!validateWorldAndChunk(location) || !validateRegionEditPermissions(location)) {
+            return Optional.empty();
+        }
+
+        try {
+            Clipboard clipboard = readClipboard(definition.schemFile());
+            if (!validateSchematicSize(clipboard, definition.id())) {
+                return Optional.empty();
+            }
+
+            Map<Material, Integer> requiredMaterials = collectRequiredMaterials(clipboard);
+            MaterialConsumptionResult consumption = consumeMaterials(requiredMaterials, village, builder);
+            if (!consumption.successful()) {
+                return Optional.empty();
+            }
+
+            ArrayDeque<BuildStep> steps = new ArrayDeque<>();
+            BlockVector3 min = clipboard.getRegion().getMinimumPoint();
+            for (BlockVector3 position : clipboard.getRegion()) {
+                var block = clipboard.getBlock(position);
+                Material material;
+                BlockData blockData;
+                try {
+                    material = BukkitAdapter.adapt(block.getBlockType());
+                    blockData = BukkitAdapter.adapt(block);
+                } catch (Exception ignored) {
+                    continue;
+                }
+                if (material == null || material.isAir()) {
+                    continue;
+                }
+                int offsetX = position.x() - min.x();
+                int offsetY = position.y() - min.y();
+                int offsetZ = position.z() - min.z();
+                Location stepLocation = location.clone().add(offsetX, offsetY, offsetZ);
+                steps.add(new BuildStep(stepLocation, material, blockData));
+            }
+            return Optional.of(new BuildPlan(definition.id(), definition.type(), definition.tags(), steps, consumption.consumedItems()));
+        } catch (IOException ioException) {
+            plugin.getLogger().warning("Error I/O preparando build '" + definition.id() + "': " + ioException.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    public void rollbackMaterials(List<ConsumedItem> consumedItems) {
+        rollbackConsumption(consumedItems);
+    }
+
+    public boolean isLongBuild(String blueprintId) {
+        return find(blueprintId)
+                .map(def -> def.tags().contains("long") || def.tags().contains("large") || def.type() == BuildingType.DEFENSIVE)
+                .orElse(false);
+    }
+
+    public boolean isCriticalBuild(String blueprintId) {
+        return find(blueprintId)
+                .map(def -> def.tags().contains("critical"))
+                .orElse(false);
+    }
+
+  private boolean pasteInstant(BlueprintDefinition definition, VillageAI village, Agent builder, Location destination,
+
                                  long startedAt, java.util.UUID villageId, java.util.UUID agentUuid) {
+
         buildTelemetry.logBuildStep(villageId, agentUuid, definition.id(), 2, elapsed(startedAt));
+
+
         if (!validateWorldAndChunk(destination)) {
             buildTelemetry.logBuildFailed(villageId, agentUuid, definition.id(), 2, elapsed(startedAt), "world_or_chunk_unavailable");
             return false;
@@ -182,29 +332,30 @@ public class BlueprintService {
     private Clipboard readClipboard(File schemFile) throws IOException {
         ClipboardFormat format = ClipboardFormats.findByFile(schemFile);
         if (format == null) {
-            throw new IOException("Formato de schematic no soportado: " + schemFile.getName());
+            throw new IOException("Formato schematic no soportado: " + schemFile.getName());
         }
 
-        try (FileInputStream input = new FileInputStream(schemFile);
-             ClipboardReader reader = format.getReader(input)) {
+        try (FileInputStream inputStream = new FileInputStream(schemFile);
+             ClipboardReader reader = format.getReader(inputStream)) {
             return reader.read();
         }
     }
 
     private Map<Material, Integer> collectRequiredMaterials(Clipboard clipboard) {
         Map<Material, Integer> required = new HashMap<>();
-        for (BlockVector3 position : clipboard.getRegion()) {
-            var block = clipboard.getBlock(position);
-            Material material;
-            try {
-                material = BukkitAdapter.adapt(block.getBlockType());
-            } catch (Exception ignored) {
-                continue;
+        BlockVector3 min = clipboard.getMinimumPoint();
+        BlockVector3 dimensions = clipboard.getDimensions();
+
+        for (int x = 0; x < dimensions.x(); x++) {
+            for (int y = 0; y < dimensions.y(); y++) {
+                for (int z = 0; z < dimensions.z(); z++) {
+                    var state = clipboard.getBlock(min.add(x, y, z));
+                    Material material = BukkitAdapter.adapt(state.getBlockType());
+                    if (!material.isAir()) {
+                        required.merge(material, 1, Integer::sum);
+                    }
+                }
             }
-            if (material == null || material.isAir()) {
-                continue;
-            }
-            required.merge(material, 1, Integer::sum);
         }
         return required;
     }
@@ -396,6 +547,20 @@ public class BlueprintService {
         }
     }
 
+    public boolean placeBlockAt(BlockPlacementStep step) {
+        Block block = step.position().getBlock();
+        if (!block.getType().isAir()) {
+            return block.getType() == step.material();
+        }
+        try {
+            block.setType(step.material(), true);
+            return block.getType() == step.material();
+        } catch (Exception ex) {
+            plugin.getLogger().warning("No se pudo colocar bloque " + step.material() + " en " + block.getLocation() + ": " + ex.getMessage());
+            return false;
+        }
+    }
+
     private boolean validateWorldAndChunk(Location destination) {
         if (destination.getWorld() == null) {
             plugin.getLogger().warning("Build cancelado: mundo destino nulo/no cargado.");
@@ -494,9 +659,14 @@ public class BlueprintService {
         return new BlueprintDefinition(id, schemFile, type, 0, tags);
     }
 
-    private enum BuildMode {
-        INSTANT,
-        GRANULAR
+    private record RawStep(Material material, Location position, int y, int perimeterScore) {
+    }
+
+
+    public record BuildStep(Location location, Material material, BlockData blockData) {
+    }
+
+    public record BuildPlan(String blueprintId, BuildingType type, Set<String> tags, Deque<BuildStep> pendingSteps, List<ConsumedItem> consumedItems) {
     }
 
     private record ConsumedItem(Inventory inventory, ItemStack item) {

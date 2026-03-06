@@ -23,7 +23,8 @@ public class VillageAI {
     private final Location center;
     private final AgentManager agentManager;
     private final BlueprintService blueprintService;
-    private final Queue<String> pendingBlueprints = new ArrayDeque<>();
+    private final Queue<String> pendingQuickBlueprints = new ArrayDeque<>();
+    private final Queue<String> pendingLongBlueprints = new ArrayDeque<>();
 
     private int foodStock = 20;
     private int bedCount = 2;
@@ -91,23 +92,35 @@ public class VillageAI {
         if (foodStock < 10) {
             Bukkit.getPluginManager().callEvent(new VillageFoodLowEvent(this, foodStock));
             blueprintService.findFirstByType(BuildingType.FOOD_STORAGE)
-                    .ifPresent(definition -> pendingBlueprints.offer(definition.id()));
+                    .ifPresent(definition -> enqueueBlueprint(definition.id()));
         }
 
         if (bedCount < population()) {
             String houseBlueprint = blueprintService.findFirstByType(BuildingType.HOUSE)
                     .map(definition -> definition.id())
                     .orElse("house_small");
-            pendingBlueprints.offer(houseBlueprint);
+            enqueueBlueprint(houseBlueprint);
         }
     }
 
-    public String pollPendingBlueprint() {
-        return pendingBlueprints.poll();
+    public String pollPendingQuickBlueprint() {
+        return pendingQuickBlueprints.poll();
+    }
+
+    public String pollPendingLongBlueprint() {
+        return pendingLongBlueprints.poll();
     }
 
     public void enqueueBlueprint(String blueprintId) {
-        pendingBlueprints.offer(blueprintId.toLowerCase());
+        if (blueprintId == null || blueprintId.isBlank()) {
+            return;
+        }
+        String normalized = blueprintId.toLowerCase();
+        if (blueprintService.isLongBuild(normalized)) {
+            pendingLongBlueprints.offer(normalized);
+            return;
+        }
+        pendingQuickBlueprints.offer(normalized);
     }
 
     public int pendingBlueprintCount() {

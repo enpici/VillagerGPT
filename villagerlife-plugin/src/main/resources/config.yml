@@ -10,13 +10,17 @@ village:
 reproduction:
   cooldown-ticks: 1200
   min-food-stock: 8
-<<<<<<< codex/implement-worldedit-integration-in-blueprintservice
 build:
   mode: INSTANT
   nearby-container-radius: 16
   material-sources: []
-=======
-
+  max-build-steps-per-tick: 32
+  structure-timeout-ticks: 1200
+  step-timeout-ticks: 60
+  max-retries: 2
+  rollback-critical-blocks: 16
+  progress-event-interval-ticks: 20
+  granular:
+    ticks-per-block: 5
 integration:
   citizens-enabled: true
->>>>>>> main
