@@ -1,0 +1,12 @@
+simulation:
+  decision-interval-ticks: 20
+  village-planning-interval-ticks: 200
+  task-interval-ticks: 1
+village:
+  max-population: 30
+  initial-target-population: 6
+  initial-food-stock: 20
+  initial-bed-count: 2
+reproduction:
+  cooldown-ticks: 1200
+  min-food-stock: 8
