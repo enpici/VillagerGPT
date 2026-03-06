@@ -36,6 +36,9 @@ public class VillagerLifeContextProvider implements VillagerContextProvider {
                 village != null ? village.name() : null,
                 village != null ? village.population() : null,
                 village != null ? village.foodStock() : null,
+                village != null ? village.pendingMaterials().entrySet().stream()
+                        .collect(java.util.stream.Collectors.toMap(entry -> entry.getKey().name().toLowerCase(), java.util.Map.Entry::getValue))
+                        : java.util.Map.of(),
                 agent != null ? List.of(agent.lastEvent()) : List.of(),
                 agent != null ? agent.relationshipsSnapshot() : java.util.Map.of()
         );

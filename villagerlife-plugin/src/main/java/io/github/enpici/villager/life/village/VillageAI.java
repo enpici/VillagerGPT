@@ -7,14 +7,18 @@ import io.github.enpici.villager.life.blueprint.BuildingType;
 import io.github.enpici.villager.life.event.VillageFoodLowEvent;
 import io.github.enpici.villager.life.event.VillagerBornEvent;
 import io.github.enpici.villager.life.role.AgentRole;
-import org.bukkit.entity.Villager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.entity.Villager;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class VillageAI {
 
@@ -23,8 +27,12 @@ public class VillageAI {
     private final Location center;
     private final AgentManager agentManager;
     private final BlueprintService blueprintService;
+    private final ResourceService resourceService;
     private final Queue<String> pendingQuickBlueprints = new ArrayDeque<>();
     private final Queue<String> pendingLongBlueprints = new ArrayDeque<>();
+    private final Queue<MaterialRequest> pendingMaterialRequests = new ArrayDeque<>();
+    private final Map<Material, Integer> materialStock = new ConcurrentHashMap<>();
+    private final Map<Material, Integer> reservedMaterials = new ConcurrentHashMap<>();
 
     private int foodStock = 20;
     private int bedCount = 2;
@@ -32,6 +40,7 @@ public class VillageAI {
     private int maxPopulation = 30;
     private long lastThreatTick = -10_000L;
     private long lastReproductionTick = -10_000L;
+    private Map<Material, Integer> pendingMaterials = Map.of();
 
     public VillageAI(UUID id, String name, Location center, AgentManager agentManager, BlueprintService blueprintService) {
         this.id = id;
@@ -39,6 +48,7 @@ public class VillageAI {
         this.center = center;
         this.agentManager = agentManager;
         this.blueprintService = blueprintService;
+        this.resourceService = ResourceService.fromPluginConfig(this);
     }
 
     public UUID id() { return id; }
@@ -46,6 +56,7 @@ public class VillageAI {
     public Location center() { return center.clone(); }
     public AgentManager agentManager() { return agentManager; }
     public BlueprintService blueprintService() { return blueprintService; }
+    public ResourceService resourceService() { return resourceService; }
 
     public int population() { return agentManager.size(); }
     public int foodStock() { return foodStock; }
@@ -53,14 +64,99 @@ public class VillageAI {
     public int populationTarget() { return populationTarget; }
     public boolean threatDetected() { return Bukkit.getCurrentTick() - lastThreatTick < 200L; }
 
-    public void addFoodStock(int amount) {
+    public synchronized void addFoodStock(int amount) {
         foodStock = Math.max(0, foodStock + amount);
     }
 
-    public boolean consumeFood(int amount) {
+    public synchronized boolean consumeFood(int amount) {
         if (foodStock < amount) return false;
         foodStock -= amount;
         return true;
+    }
+
+    public void addMaterialStock(Material material, int amount) {
+        if (material == null || amount <= 0) {
+            return;
+        }
+        materialStock.merge(material, amount, Integer::sum);
+    }
+
+    public int totalMaterial(Material material) {
+        return materialStock.getOrDefault(material, 0);
+    }
+
+    public int availableMaterial(Material material) {
+        return Math.max(0, totalMaterial(material) - reservedMaterials.getOrDefault(material, 0));
+    }
+
+    public boolean reserveMaterial(Material material, int amount) {
+        if (material == null || amount <= 0) {
+            return false;
+        }
+        int available = availableMaterial(material);
+        if (available < amount) {
+            return false;
+        }
+        reservedMaterials.merge(material, amount, Integer::sum);
+        return true;
+    }
+
+    public void releaseReservedMaterial(Material material, int amount) {
+        if (material == null || amount <= 0) {
+            return;
+        }
+        reservedMaterials.compute(material, (m, reserved) -> {
+            int next = (reserved == null ? 0 : reserved) - amount;
+            return next > 0 ? next : null;
+        });
+    }
+
+    public boolean consumeReservedMaterial(Material material, int amount) {
+        if (material == null || amount <= 0) {
+            return false;
+        }
+        int reserved = reservedMaterials.getOrDefault(material, 0);
+        int stock = materialStock.getOrDefault(material, 0);
+        if (reserved < amount || stock < amount) {
+            return false;
+        }
+        releaseReservedMaterial(material, amount);
+        materialStock.compute(material, (m, current) -> {
+            int next = (current == null ? 0 : current) - amount;
+            return next > 0 ? next : null;
+        });
+        return true;
+    }
+
+    public Map<Material, Integer> materialStockSnapshot() {
+        return Map.copyOf(materialStock);
+    }
+
+    public Map<Material, Integer> pendingMaterials() {
+        return pendingMaterials;
+    }
+
+    public void setPendingMaterials(Map<Material, Integer> missingMaterials) {
+        this.pendingMaterials = Map.copyOf(missingMaterials);
+    }
+
+    public void enqueueMaterialRequests(Map<Material, Integer> missingMaterials) {
+        missingMaterials.forEach((material, amount) -> {
+            if (amount <= 0) {
+                return;
+            }
+            pendingMaterialRequests.offer(new MaterialRequest(material, amount));
+        });
+    }
+
+    public MaterialRequest pollMaterialRequest() {
+        return pendingMaterialRequests.poll();
+    }
+
+    public void requeueMaterialRequest(MaterialRequest request) {
+        if (request != null && request.amount() > 0) {
+            pendingMaterialRequests.offer(request);
+        }
     }
 
     public boolean canReproduce() {
@@ -144,4 +240,6 @@ public class VillageAI {
             }
         }
     }
+
+    public record MaterialRequest(Material material, int amount) {}
 }

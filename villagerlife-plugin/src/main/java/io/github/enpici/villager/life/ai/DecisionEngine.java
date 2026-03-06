@@ -25,7 +25,7 @@ public class DecisionEngine {
 
         return switch (agent.role()) {
             case FARMER -> new HarvestTask();
-            case BUILDER -> new DepositItemsTask();
+            case BUILDER -> !village.pendingMaterials().isEmpty() ? new DepositItemsTask() : new WanderTask();
             case GUARD -> new WanderTask();
             default -> new WanderTask();
         };

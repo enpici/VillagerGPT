@@ -23,6 +23,7 @@ public class BuildStructureTask extends BaseTask {
 
     private final String blueprintId;
     private BuildExecutor executor;
+    private BuildPlan plan;
     private TaskState state = TaskState.PREPARE_PLAN;
     private long startedAtTick;
     private long nextPlacementTick;
@@ -37,18 +38,44 @@ public class BuildStructureTask extends BaseTask {
 
     @Override
     public boolean canStart(Agent agent, VillageAI villageAI) {
-        return villageAI.blueprintService().hasBlueprint(blueprintId);
+        if (!villageAI.blueprintService().hasBlueprint(blueprintId)) {
+            return false;
+        }
+        Optional<BuildPlan> candidatePlan = villageAI.blueprintService().extractBuildPlan(blueprintId, villageAI.center());
+        if (candidatePlan.isEmpty()) {
+            return false;
+        }
+        boolean hasMaterials = villageAI.resourceService().hasMaterials(candidatePlan.get());
+        if (!hasMaterials) {
+            var missing = villageAI.resourceService().calculateMissingMaterials(candidatePlan.get());
+            villageAI.setPendingMaterials(missing);
+            villageAI.enqueueMaterialRequests(missing);
+        }
+        return hasMaterials;
     }
 
     @Override
     protected void onStart(Agent agent, VillageAI villageAI) {
         this.startedAtTick = Bukkit.getCurrentTick();
-        Optional<BuildPlan> plan = villageAI.blueprintService().extractBuildPlan(blueprintId, villageAI.center());
-        if (plan.isEmpty() || plan.get().size() == 0) {
+        Optional<BuildPlan> extractedPlan = villageAI.blueprintService().extractBuildPlan(blueprintId, villageAI.center());
+        if (extractedPlan.isEmpty() || extractedPlan.get().size() == 0) {
             this.state = TaskState.FAILED;
             return;
         }
-        this.executor = new BuildExecutor(plan.get());
+        this.plan = extractedPlan.get();
+        if (!villageAI.resourceService().hasMaterials(plan)) {
+            var missing = villageAI.resourceService().calculateMissingMaterials(plan);
+            villageAI.setPendingMaterials(missing);
+            villageAI.enqueueMaterialRequests(missing);
+            this.state = TaskState.FAILED;
+            return;
+        }
+        if (!villageAI.resourceService().reserveMaterials(plan)) {
+            this.state = TaskState.FAILED;
+            return;
+        }
+        villageAI.setPendingMaterials(java.util.Map.of());
+        this.executor = new BuildExecutor(plan);
         this.state = TaskState.MOVE_TO_NEXT_BLOCK;
     }
 
@@ -80,7 +107,7 @@ public class BuildStructureTask extends BaseTask {
         return switch (state) {
             case MOVE_TO_NEXT_BLOCK -> tickMoveToNextBlock(agent, step);
             case PLACE_BLOCK -> tickPlaceBlock(agent, villageAI, step);
-            case VERIFY_PLACEMENT -> tickVerifyPlacement(step);
+            case VERIFY_PLACEMENT -> tickVerifyPlacement(step, villageAI);
             case PREPARE_PLAN -> TaskStatus.RUNNING;
             case FAILED -> TaskStatus.FAILED;
         };
@@ -150,8 +177,14 @@ public class BuildStructureTask extends BaseTask {
         return TaskStatus.RUNNING;
     }
 
-    private TaskStatus tickVerifyPlacement(BlockPlacementStep step) {
+    private TaskStatus tickVerifyPlacement(BlockPlacementStep step, VillageAI villageAI) {
         if (step.position().getBlock().getType() == step.material()) {
+            if (!villageAI.resourceService().consumeForStep(step)) {
+                executor.skipCurrent("Sin reserva de material para consumir");
+                failedBlocks++;
+                state = TaskState.MOVE_TO_NEXT_BLOCK;
+                return TaskStatus.RUNNING;
+            }
             executor.markCurrentPlaced();
             placedBlocks++;
         } else {
@@ -160,6 +193,14 @@ public class BuildStructureTask extends BaseTask {
         }
         state = TaskState.MOVE_TO_NEXT_BLOCK;
         return TaskStatus.RUNNING;
+    }
+
+
+    @Override
+    protected void onStop(Agent agent, VillageAI villageAI, TaskStatus reason) {
+        if (reason != TaskStatus.SUCCESS && plan != null && executor != null) {
+            villageAI.resourceService().releaseUnconsumed(plan, executor.currentIndex());
+        }
     }
 
     private void emitCompletion(VillageAI villageAI) {
