@@ -21,7 +21,7 @@ public class BuildStructureTask extends BaseTask {
 
     @Override
     protected TaskStatus onTick(Agent agent, VillageAI villageAI) {
-        boolean built = villageAI.blueprintService().placeInstant(blueprintId, villageAI.center());
+        boolean built = villageAI.blueprintService().placeStructure(blueprintId, villageAI, agent, villageAI.center());
         return built ? TaskStatus.SUCCESS : TaskStatus.FAILED;
     }
 }
