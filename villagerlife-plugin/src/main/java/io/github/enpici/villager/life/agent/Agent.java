@@ -20,6 +20,7 @@ public class Agent {
     private AgentRole role;
     private Task activeTask;
     private String lastEvent = "spawned";
+    private Integer npcId;
 
     public Agent(UUID villagerUuid, AgentRole role) {
         this.villagerUuid = villagerUuid;
@@ -80,6 +81,14 @@ public class Agent {
 
     public void setLastEvent(String lastEvent) {
         this.lastEvent = lastEvent;
+    }
+
+    public Integer npcId() {
+        return npcId;
+    }
+
+    public void setNpcId(Integer npcId) {
+        this.npcId = npcId;
     }
 
     public Map<UUID, Integer> relationshipsSnapshot() {
