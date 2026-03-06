@@ -52,10 +52,17 @@ class ConversationMemory(dbFile: String) {
                 CREATE TABLE IF NOT EXISTS villagers (
                     uuid TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
-                    summary TEXT
+                    summary TEXT,
+                    villager_role TEXT,
+                    village_name TEXT,
+                    relationships TEXT
                 )
                 """.trimIndent()
             )
+
+            ensureColumn(stmt, "villagers", "villager_role", "TEXT")
+            ensureColumn(stmt, "villagers", "village_name", "TEXT")
+            ensureColumn(stmt, "villagers", "relationships", "TEXT")
         }
 
         writeConnection.createStatement().use { stmt ->
@@ -147,15 +154,27 @@ class ConversationMemory(dbFile: String) {
         }
     }
 
-    data class VillagerInfo(val name: String, val summary: String?)
+    data class VillagerInfo(
+        val name: String,
+        val summary: String?,
+        val villagerRole: String?,
+        val villageName: String?,
+        val relationships: String?
+    )
 
     fun getVillagerInfo(uuid: UUID): VillagerInfo? {
         return withReadConnection { connection ->
-            connection.prepareStatement("SELECT name, summary FROM villagers WHERE uuid=?").use { ps ->
+            connection.prepareStatement("SELECT name, summary, villager_role, village_name, relationships FROM villagers WHERE uuid=?").use { ps ->
                 ps.setString(1, uuid.toString())
                 val rs = ps.executeQuery()
                 if (rs.next()) {
-                    VillagerInfo(rs.getString("name"), rs.getString("summary"))
+                    VillagerInfo(
+                        name = rs.getString("name"),
+                        summary = rs.getString("summary"),
+                        villagerRole = rs.getString("villager_role"),
+                        villageName = rs.getString("village_name"),
+                        relationships = rs.getString("relationships")
+                    )
                 } else {
                     null
                 }
@@ -178,6 +197,18 @@ class ConversationMemory(dbFile: String) {
             connection.prepareStatement("UPDATE villagers SET summary=? WHERE uuid=?").use { ps ->
                 ps.setString(1, summary)
                 ps.setString(2, uuid.toString())
+                ps.executeUpdate()
+            }
+        }
+    }
+
+    fun updateVillagerMetadata(uuid: UUID, role: String?, villageName: String?, relationships: String?) {
+        withWriteConnection { connection ->
+            connection.prepareStatement("UPDATE villagers SET villager_role=?, village_name=?, relationships=? WHERE uuid=?").use { ps ->
+                ps.setString(1, role)
+                ps.setString(2, villageName)
+                ps.setString(3, relationships)
+                ps.setString(4, uuid.toString())
                 ps.executeUpdate()
             }
         }
@@ -247,5 +278,22 @@ class ConversationMemory(dbFile: String) {
             }
         }
         return connection
+    }
+
+    private fun ensureColumn(statement: java.sql.Statement, table: String, column: String, type: String) {
+        val hasColumn = statement.executeQuery("PRAGMA table_info($table)").use { rs ->
+            var found = false
+            while (rs.next()) {
+                if (rs.getString("name").equals(column, ignoreCase = true)) {
+                    found = true
+                    break
+                }
+            }
+            found
+        }
+
+        if (!hasColumn) {
+            statement.executeUpdate("ALTER TABLE $table ADD COLUMN $column $type")
+        }
     }
 }

@@ -14,6 +14,9 @@ import net.kyori.adventure.text.Component
 import org.bukkit.persistence.PersistentDataType
 import tj.horner.villagergpt.conversation.VillagerNameGenerator
 import tj.horner.villagergpt.conversation.formatting.NavigationFormatter
+import tj.horner.villagergpt.memory.ConversationMemory
+import tj.horner.villagergpt.api.VillagerContext
+import tj.horner.villagergpt.events.VillagerLLMResponseEvent
 import java.time.Duration
 import java.util.*
 import kotlin.random.Random
@@ -24,8 +27,9 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
     val conversationId: String = UUID.randomUUID().toString()
 
     private lateinit var villagerName: String
-    private var villagerSummary: String? = null
+    private var villagerInfo: ConversationMemory.VillagerInfo? = null
     private lateinit var personality: VillagerPersonality
+    private lateinit var villagerContext: VillagerContext
 
     val messages = mutableListOf<ChatMessage>()
     var pendingResponse = false
@@ -41,6 +45,12 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
     fun addMessage(message: ChatMessage) {
         val event = VillagerConversationMessageEvent(this, message)
         plugin.server.pluginManager.callEvent(event)
+
+        if (message.role == ChatRole.Assistant) {
+            plugin.server.pluginManager.callEvent(
+                VillagerLLMResponseEvent(player, villager, conversationId, message.content)
+            )
+        }
 
         messages.add(message)
         lastMessageAt = Date()
@@ -74,14 +84,23 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
     }
 
     private fun startConversation() {
+        villagerContext = plugin.resolveContext(villager)
+
         val info = plugin.memory.getVillagerInfo(villager.uniqueId)
         if (info == null) {
             villagerName = VillagerNameGenerator.randomName()
             plugin.memory.insertVillager(villager.uniqueId, villagerName)
         } else {
             villagerName = info.name
-            villagerSummary = info.summary
+            villagerInfo = info
         }
+
+        plugin.memory.updateVillagerMetadata(
+            uuid = villager.uniqueId,
+            role = villagerContext.currentRole,
+            villageName = villagerContext.villageName,
+            relationships = serializeRelationships(villagerContext.relationshipsWithPlayers)
+        )
 
         personality = getPersonality()
 
@@ -136,7 +155,7 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
         return """
         You are $villagerName, a villager in the game Minecraft where you can converse with the player and come up with new trades based on your conversation.
 
-        ${villagerSummary?.let { "Previously: $it" } ?: "" }
+        ${villagerInfo?.summary?.let { "Previously: $it" } ?: "" }
 
         TRADING:
 
@@ -194,15 +213,38 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
         Player information:
         - Name: ${player.name}
         - Reputation Score (range is -700 to 725, 0 is neutral, higher is better): $playerRep
+        - Relationship score from your records: ${villagerContext.relationshipsWithPlayers[player.uniqueId] ?: playerRep}
+
+        Village simulation context:
+        - Village name: ${villagerContext.villageName ?: villagerInfo?.villageName ?: "Unknown"}
+        - Village population: ${villagerContext.villagePopulation?.toString() ?: "Unknown"}
+        - Village food stock: ${villagerContext.villageFoodStock?.toString() ?: "Unknown"}
+        - Current role: ${villagerContext.currentRole ?: villagerInfo?.villagerRole ?: "Unassigned"}
+        - Hunger level: ${villagerContext.hungerLevel?.toString() ?: "Unknown"}
+        - Energy level: ${villagerContext.energyLevel?.toString() ?: "Unknown"}
+        - Recent events:
+${formatRecentEvents(villagerContext.recentEvents)}
+        - Stored relationships snapshot: ${villagerInfo?.relationships ?: "None"}
 
         Personality:
         - Your Name: $villagerName
-        - Your Profession: ${villager.profession.name}
+        - Your Profession: ${villagerContext.profession.name}
+        - Personality archetype: ${villagerContext.personalityArchetype ?: personality.name}
         - ${personality.promptDescription()}
         - Act like a villager and stay in character the whole time
         - Do not reveal to the player the fact that you are a character in a video game, and do not mention Minecraft by name
         - Speak in a mildly medieval style
         """.trimIndent()
+    }
+
+    private fun formatRecentEvents(events: List<String>): String {
+        if (events.isEmpty()) return "          - None"
+        return events.joinToString("\n") { "          - $it" }
+    }
+
+    private fun serializeRelationships(relationships: Map<UUID, Int>): String? {
+        if (relationships.isEmpty()) return null
+        return relationships.entries.joinToString(",") { "${it.key}:${it.value}" }
     }
 
     private fun getPersonality(): VillagerPersonality {
