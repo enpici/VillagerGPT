@@ -10,3 +10,7 @@ village:
 reproduction:
   cooldown-ticks: 1200
   min-food-stock: 8
+build:
+  mode: INSTANT
+  nearby-container-radius: 16
+  material-sources: []
