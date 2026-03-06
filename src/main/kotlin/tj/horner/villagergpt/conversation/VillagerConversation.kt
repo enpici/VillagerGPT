@@ -200,7 +200,7 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
         World information:
         - Time: $time
         - Weather: $weather
-        - Biome: ${biome.name}
+        - Biome: ${biome.key}
 
         Navigation and orientation:
         - Your coordinates: $villagerCoords
@@ -228,7 +228,7 @@ ${formatRecentEvents(villagerContext.recentEvents)}
 
         Personality:
         - Your Name: $villagerName
-        - Your Profession: ${villagerContext.profession.name}
+        - Your Profession: ${villagerContext.profession.key}
         - Personality archetype: ${villagerContext.personalityArchetype ?: personality.name}
         - ${personality.promptDescription()}
         - Act like a villager and stay in character the whole time
