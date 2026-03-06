@@ -219,6 +219,7 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
         - Village name: ${villagerContext.villageName ?: villagerInfo?.villageName ?: "Unknown"}
         - Village population: ${villagerContext.villagePopulation?.toString() ?: "Unknown"}
         - Village food stock: ${villagerContext.villageFoodStock?.toString() ?: "Unknown"}
+        - Pending village materials: ${formatPendingMaterials(villagerContext.villagePendingMaterials)}
         - Current role: ${villagerContext.currentRole ?: villagerInfo?.villagerRole ?: "Unassigned"}
         - Hunger level: ${villagerContext.hungerLevel?.toString() ?: "Unknown"}
         - Energy level: ${villagerContext.energyLevel?.toString() ?: "Unknown"}
@@ -235,6 +236,12 @@ ${formatRecentEvents(villagerContext.recentEvents)}
         - Do not reveal to the player the fact that you are a character in a video game, and do not mention Minecraft by name
         - Speak in a mildly medieval style
         """.trimIndent()
+    }
+
+
+    private fun formatPendingMaterials(pendingMaterials: Map<String, Int>): String {
+        if (pendingMaterials.isEmpty()) return "None"
+        return pendingMaterials.entries.joinToString(", ") { "${it.key}:${it.value}" }
     }
 
     private fun formatRecentEvents(events: List<String>): String {
