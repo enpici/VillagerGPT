@@ -5,6 +5,8 @@ public enum TaskStatus {
     RUNNING,
     SUCCESS,
     FAILED,
+    RETRYABLE_FAILED,
+    FATAL_FAILED,
     CANCELLED,
     TIMEOUT
 }

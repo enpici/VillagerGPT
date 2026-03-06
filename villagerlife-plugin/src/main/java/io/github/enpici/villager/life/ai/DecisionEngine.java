@@ -23,11 +23,6 @@ public class DecisionEngine {
         if (max == sleep) return new SleepTask();
         if (max == socialize && Bukkit.getCurrentTick() % 2 == 0) return new WanderTask();
 
-        String pending = village.pollPendingBlueprint();
-        if (pending != null && (agent.role() == AgentRole.BUILDER || agent.role() == AgentRole.LEADER)) {
-            return new BuildStructureTask(pending);
-        }
-
         return switch (agent.role()) {
             case FARMER -> new HarvestTask();
             case BUILDER -> new DepositItemsTask();
