@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.conversation.pipeline.processors
+package io.github.enpici.villager.gpt.conversation.pipeline.processors
 
 import io.mockk.every
 import io.mockk.just
@@ -24,8 +24,8 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import tj.horner.villagergpt.conversation.VillagerConversation
-import tj.horner.villagergpt.conversation.pipeline.ConversationMessageAction
+import io.github.enpici.villager.gpt.conversation.VillagerConversation
+import io.github.enpici.villager.gpt.conversation.pipeline.ConversationMessageAction
 
 class TradeOfferProcessorTest {
     private val player = mockk<Player>(relaxed = true)

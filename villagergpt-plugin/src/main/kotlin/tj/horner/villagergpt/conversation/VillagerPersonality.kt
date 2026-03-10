@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.conversation
+package io.github.enpici.villager.gpt.conversation
 
 enum class VillagerPersonality {
     ELDER {

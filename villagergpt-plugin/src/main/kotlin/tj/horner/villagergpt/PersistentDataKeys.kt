@@ -1,4 +1,4 @@
-package tj.horner.villagergpt
+package io.github.enpici.villager.gpt
 
 import org.bukkit.NamespacedKey
 

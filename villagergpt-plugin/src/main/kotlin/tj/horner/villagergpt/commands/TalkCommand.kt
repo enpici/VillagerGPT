@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.commands
+package io.github.enpici.villager.gpt.commands
 
 import com.github.shynixn.mccoroutine.bukkit.SuspendingCommandExecutor
 import net.kyori.adventure.text.Component
@@ -8,9 +8,9 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.bukkit.metadata.FixedMetadataValue
-import tj.horner.villagergpt.MetadataKey
-import tj.horner.villagergpt.VillagerGPT
-import tj.horner.villagergpt.chat.ChatMessageTemplate
+import io.github.enpici.villager.gpt.MetadataKey
+import io.github.enpici.villager.gpt.VillagerGPT
+import io.github.enpici.villager.gpt.chat.ChatMessageTemplate
 
 class TalkCommand(private val plugin: VillagerGPT) : SuspendingCommandExecutor {
     override suspend fun onCommand(

@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.conversation
+package io.github.enpici.villager.gpt.conversation
 
 import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.ChatMessage
@@ -7,16 +7,16 @@ import kotlinx.coroutines.runBlocking
 import com.destroystokyo.paper.entity.villager.ReputationType
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
-import tj.horner.villagergpt.VillagerGPT
-import tj.horner.villagergpt.PersistentDataKeys
-import tj.horner.villagergpt.events.VillagerConversationMessageEvent
+import io.github.enpici.villager.gpt.VillagerGPT
+import io.github.enpici.villager.gpt.PersistentDataKeys
+import io.github.enpici.villager.gpt.events.VillagerConversationMessageEvent
 import net.kyori.adventure.text.Component
 import org.bukkit.persistence.PersistentDataType
-import tj.horner.villagergpt.conversation.VillagerNameGenerator
-import tj.horner.villagergpt.conversation.formatting.NavigationFormatter
-import tj.horner.villagergpt.memory.ConversationMemory
-import tj.horner.villagergpt.api.VillagerContext
-import tj.horner.villagergpt.events.VillagerLLMResponseEvent
+import io.github.enpici.villager.gpt.conversation.VillagerNameGenerator
+import io.github.enpici.villager.gpt.conversation.formatting.NavigationFormatter
+import io.github.enpici.villager.gpt.memory.ConversationMemory
+import io.github.enpici.villager.api.VillagerContext
+import io.github.enpici.villager.gpt.events.VillagerLLMResponseEvent
 import java.time.Duration
 import java.util.*
 import kotlin.random.Random

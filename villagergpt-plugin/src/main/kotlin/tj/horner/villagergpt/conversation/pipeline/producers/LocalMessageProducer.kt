@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.conversation.pipeline.producers
+package io.github.enpici.villager.gpt.conversation.pipeline.producers
 
 import com.aallam.openai.api.BetaOpenAI
 import io.ktor.client.HttpClient
@@ -13,10 +13,10 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.bukkit.configuration.Configuration
-import tj.horner.villagergpt.VillagerGPT
-import tj.horner.villagergpt.conversation.VillagerConversation
-import tj.horner.villagergpt.conversation.pipeline.ConversationMessageProducer
-import tj.horner.villagergpt.observability.logContext
+import io.github.enpici.villager.gpt.VillagerGPT
+import io.github.enpici.villager.gpt.conversation.VillagerConversation
+import io.github.enpici.villager.gpt.conversation.pipeline.ConversationMessageProducer
+import io.github.enpici.villager.gpt.observability.logContext
 import kotlin.system.measureTimeMillis
 
 @OptIn(BetaOpenAI::class)

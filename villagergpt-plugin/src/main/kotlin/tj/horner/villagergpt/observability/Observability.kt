@@ -1,7 +1,7 @@
-package tj.horner.villagergpt.observability
+package io.github.enpici.villager.gpt.observability
 
 import org.bukkit.configuration.file.FileConfiguration
-import tj.horner.villagergpt.conversation.VillagerConversation
+import io.github.enpici.villager.gpt.conversation.VillagerConversation
 import java.util.Locale
 import java.util.logging.Level
 

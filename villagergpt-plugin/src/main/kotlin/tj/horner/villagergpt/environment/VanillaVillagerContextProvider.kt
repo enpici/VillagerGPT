@@ -1,12 +1,12 @@
-package tj.horner.villagergpt.environment
+package io.github.enpici.villager.gpt.environment
 
 import org.bukkit.entity.Villager
 import org.bukkit.persistence.PersistentDataType
 import com.destroystokyo.paper.entity.villager.ReputationType
-import tj.horner.villagergpt.PersistentDataKeys
-import tj.horner.villagergpt.api.DefaultVillagerContext
-import tj.horner.villagergpt.api.VillagerContext
-import tj.horner.villagergpt.api.VillagerContextProvider
+import io.github.enpici.villager.gpt.PersistentDataKeys
+import io.github.enpici.villager.api.DefaultVillagerContext
+import io.github.enpici.villager.api.VillagerContext
+import io.github.enpici.villager.api.VillagerContextProvider
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 

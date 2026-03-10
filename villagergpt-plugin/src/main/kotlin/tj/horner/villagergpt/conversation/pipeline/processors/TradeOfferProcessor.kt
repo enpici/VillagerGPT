@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.conversation.pipeline.processors
+package io.github.enpici.villager.gpt.conversation.pipeline.processors
 
 import com.google.gson.Gson
 import net.kyori.adventure.text.Component
@@ -9,12 +9,12 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.MerchantRecipe
-import tj.horner.villagergpt.conversation.VillagerConversation
-import tj.horner.villagergpt.conversation.formatting.MessageFormatter
-import tj.horner.villagergpt.conversation.pipeline.ConversationMessageAction
-import tj.horner.villagergpt.conversation.pipeline.ConversationMessageProcessor
-import tj.horner.villagergpt.conversation.pipeline.actions.SendPlayerMessageAction
-import tj.horner.villagergpt.conversation.pipeline.actions.SetTradesAction
+import io.github.enpici.villager.gpt.conversation.VillagerConversation
+import io.github.enpici.villager.gpt.conversation.formatting.MessageFormatter
+import io.github.enpici.villager.gpt.conversation.pipeline.ConversationMessageAction
+import io.github.enpici.villager.gpt.conversation.pipeline.ConversationMessageProcessor
+import io.github.enpici.villager.gpt.conversation.pipeline.actions.SendPlayerMessageAction
+import io.github.enpici.villager.gpt.conversation.pipeline.actions.SetTradesAction
 import java.util.logging.Level
 import java.util.logging.Logger
 

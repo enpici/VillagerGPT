@@ -1,9 +1,9 @@
-package tj.horner.villagergpt.conversation.pipeline
+package io.github.enpici.villager.gpt.conversation.pipeline
 
 import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
-import tj.horner.villagergpt.conversation.VillagerConversation
+import io.github.enpici.villager.gpt.conversation.VillagerConversation
 
 /**
  * A pipeline for producing and processing messages for a VillagerConversation.

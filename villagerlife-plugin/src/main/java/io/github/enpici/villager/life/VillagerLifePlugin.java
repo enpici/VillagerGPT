@@ -12,7 +12,7 @@ import io.github.enpici.villager.life.scheduler.SimulationScheduler;
 import io.github.enpici.villager.life.village.VillageManager;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
-import tj.horner.villagergpt.api.VillagerContextProvider;
+import io.github.enpici.villager.api.VillagerContextProvider;
 
 public final class VillagerLifePlugin extends JavaPlugin {
 

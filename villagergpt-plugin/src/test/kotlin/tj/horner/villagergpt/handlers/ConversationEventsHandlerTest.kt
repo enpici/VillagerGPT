@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.handlers
+package io.github.enpici.villager.gpt.handlers
 
 import io.mockk.every
 import io.mockk.mockk
@@ -7,9 +7,9 @@ import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Villager
 import org.bukkit.event.entity.EntityDeathEvent
 import org.junit.jupiter.api.Test
-import tj.horner.villagergpt.VillagerGPT
-import tj.horner.villagergpt.conversation.VillagerConversation
-import tj.horner.villagergpt.conversation.VillagerConversationManager
+import io.github.enpici.villager.gpt.VillagerGPT
+import io.github.enpici.villager.gpt.conversation.VillagerConversation
+import io.github.enpici.villager.gpt.conversation.VillagerConversationManager
 
 class ConversationEventsHandlerTest {
 

@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.api
+package io.github.enpici.villager.api
 
 import org.bukkit.entity.Villager
 import java.util.UUID

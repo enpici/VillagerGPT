@@ -1,8 +1,8 @@
-package tj.horner.villagergpt.conversation.pipeline.actions
+package io.github.enpici.villager.gpt.conversation.pipeline.actions
 
 import org.bukkit.Location
 import org.bukkit.entity.Villager
-import tj.horner.villagergpt.conversation.pipeline.ConversationMessageAction
+import io.github.enpici.villager.gpt.conversation.pipeline.ConversationMessageAction
 
 class PathfindToPoiAction(
     private val villager: Villager,

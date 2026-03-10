@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.conversation.pipeline.producers
+package io.github.enpici.villager.gpt.conversation.pipeline.producers
 
 import kotlinx.coroutines.delay
 import java.net.ConnectException
