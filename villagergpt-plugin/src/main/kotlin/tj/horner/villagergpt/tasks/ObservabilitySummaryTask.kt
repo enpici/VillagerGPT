@@ -1,7 +1,7 @@
-package tj.horner.villagergpt.tasks
+package io.github.enpici.villager.gpt.tasks
 
 import org.bukkit.scheduler.BukkitRunnable
-import tj.horner.villagergpt.VillagerGPT
+import io.github.enpici.villager.gpt.VillagerGPT
 
 class ObservabilitySummaryTask(private val plugin: VillagerGPT) : BukkitRunnable() {
     override fun run() {

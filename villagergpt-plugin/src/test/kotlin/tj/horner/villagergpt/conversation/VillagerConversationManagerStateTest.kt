@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.conversation
+package io.github.enpici.villager.gpt.conversation
 
 import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.ChatMessage
@@ -18,9 +18,9 @@ import org.bukkit.plugin.PluginManager
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import tj.horner.villagergpt.VillagerGPT
-import tj.horner.villagergpt.conversation.pipeline.producers.ProviderMetricsRegistry
-import tj.horner.villagergpt.memory.ConversationMemory
+import io.github.enpici.villager.gpt.VillagerGPT
+import io.github.enpici.villager.gpt.conversation.pipeline.producers.ProviderMetricsRegistry
+import io.github.enpici.villager.gpt.memory.ConversationMemory
 import java.util.UUID
 
 @OptIn(BetaOpenAI::class)

@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.conversation.pathfinding
+package io.github.enpici.villager.gpt.conversation.pathfinding
 
 import org.bukkit.Material
 import org.bukkit.entity.Villager

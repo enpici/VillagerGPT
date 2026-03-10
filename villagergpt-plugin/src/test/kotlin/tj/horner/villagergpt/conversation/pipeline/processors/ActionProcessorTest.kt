@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.conversation.pipeline.processors
+package io.github.enpici.villager.gpt.conversation.pipeline.processors
 
 import io.mockk.every
 import io.mockk.mockk
@@ -7,11 +7,11 @@ import org.bukkit.entity.Villager
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import tj.horner.villagergpt.conversation.VillagerConversation
-import tj.horner.villagergpt.conversation.pipeline.actions.PathfindToPlayerAction
-import tj.horner.villagergpt.conversation.pipeline.actions.PathfindToPoiAction
-import tj.horner.villagergpt.conversation.pipeline.actions.PlaySoundAction
-import tj.horner.villagergpt.conversation.pipeline.actions.ShakeHeadAction
+import io.github.enpici.villager.gpt.conversation.VillagerConversation
+import io.github.enpici.villager.gpt.conversation.pipeline.actions.PathfindToPlayerAction
+import io.github.enpici.villager.gpt.conversation.pipeline.actions.PathfindToPoiAction
+import io.github.enpici.villager.gpt.conversation.pipeline.actions.PlaySoundAction
+import io.github.enpici.villager.gpt.conversation.pipeline.actions.ShakeHeadAction
 
 class ActionProcessorTest {
     private val player = mockk<Player>(relaxed = true)

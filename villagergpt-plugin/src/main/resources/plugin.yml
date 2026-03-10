@@ -1,6 +1,6 @@
 name: VillagerGPT
 version: '${version}'
-main: tj.horner.villagergpt.VillagerGPT
+main: io.github.enpici.villager.gpt.VillagerGPT
 api-version: 1.21
 commands:
   ttv:

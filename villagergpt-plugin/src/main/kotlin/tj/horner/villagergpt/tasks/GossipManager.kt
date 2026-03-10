@@ -1,8 +1,8 @@
-package tj.horner.villagergpt.tasks
+package io.github.enpici.villager.gpt.tasks
 
 import org.bukkit.entity.Villager
 import org.bukkit.scheduler.BukkitRunnable
-import tj.horner.villagergpt.VillagerGPT
+import io.github.enpici.villager.gpt.VillagerGPT
 import java.util.UUID
 
 class GossipManager(private val plugin: VillagerGPT) : BukkitRunnable() {

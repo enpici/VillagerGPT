@@ -1,11 +1,11 @@
-package tj.horner.villagergpt.conversation
+package io.github.enpici.villager.gpt.conversation
 
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
-import tj.horner.villagergpt.VillagerGPT
+import io.github.enpici.villager.gpt.VillagerGPT
 import kotlinx.coroutines.runBlocking
-import tj.horner.villagergpt.events.VillagerConversationEndEvent
-import tj.horner.villagergpt.events.VillagerConversationStartEvent
+import io.github.enpici.villager.gpt.events.VillagerConversationEndEvent
+import io.github.enpici.villager.gpt.events.VillagerConversationStartEvent
 import com.aallam.openai.api.BetaOpenAI
 
 @OptIn(BetaOpenAI::class)

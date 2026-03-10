@@ -1,16 +1,16 @@
-package tj.horner.villagergpt.conversation.pipeline.processors
+package io.github.enpici.villager.gpt.conversation.pipeline.processors
 
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.sound.Sound
-import tj.horner.villagergpt.conversation.VillagerConversation
-import tj.horner.villagergpt.conversation.pipeline.ConversationMessageAction
-import tj.horner.villagergpt.conversation.pipeline.ConversationMessageProcessor
-import tj.horner.villagergpt.conversation.pipeline.ConversationMessageTransformer
-import tj.horner.villagergpt.conversation.pathfinding.VillagerPoiLocator
-import tj.horner.villagergpt.conversation.pipeline.actions.PathfindToPlayerAction
-import tj.horner.villagergpt.conversation.pipeline.actions.PathfindToPoiAction
-import tj.horner.villagergpt.conversation.pipeline.actions.PlaySoundAction
-import tj.horner.villagergpt.conversation.pipeline.actions.ShakeHeadAction
+import io.github.enpici.villager.gpt.conversation.VillagerConversation
+import io.github.enpici.villager.gpt.conversation.pipeline.ConversationMessageAction
+import io.github.enpici.villager.gpt.conversation.pipeline.ConversationMessageProcessor
+import io.github.enpici.villager.gpt.conversation.pipeline.ConversationMessageTransformer
+import io.github.enpici.villager.gpt.conversation.pathfinding.VillagerPoiLocator
+import io.github.enpici.villager.gpt.conversation.pipeline.actions.PathfindToPlayerAction
+import io.github.enpici.villager.gpt.conversation.pipeline.actions.PathfindToPoiAction
+import io.github.enpici.villager.gpt.conversation.pipeline.actions.PlaySoundAction
+import io.github.enpici.villager.gpt.conversation.pipeline.actions.ShakeHeadAction
 
 class ActionProcessor : ConversationMessageProcessor, ConversationMessageTransformer {
     private val actionRegex = Regex("ACTION:([A-Z_]+)")

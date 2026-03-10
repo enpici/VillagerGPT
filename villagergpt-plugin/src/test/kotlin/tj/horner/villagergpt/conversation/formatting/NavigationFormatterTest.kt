@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.conversation.formatting
+package io.github.enpici.villager.gpt.conversation.formatting
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

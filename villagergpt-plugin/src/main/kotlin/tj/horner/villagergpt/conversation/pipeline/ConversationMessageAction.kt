@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.conversation.pipeline
+package io.github.enpici.villager.gpt.conversation.pipeline
 
 interface ConversationMessageAction {
     fun run()

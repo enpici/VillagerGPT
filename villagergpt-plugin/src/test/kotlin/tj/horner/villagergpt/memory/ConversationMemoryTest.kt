@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.memory
+package io.github.enpici.villager.gpt.memory
 
 import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.ChatMessage

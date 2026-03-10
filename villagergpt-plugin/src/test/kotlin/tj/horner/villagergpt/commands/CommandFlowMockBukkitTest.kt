@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.commands
+package io.github.enpici.villager.gpt.commands
 
 import be.seeseemelk.mockbukkit.MockBukkit
 import be.seeseemelk.mockbukkit.ServerMock
@@ -13,10 +13,10 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import tj.horner.villagergpt.MetadataKey
-import tj.horner.villagergpt.VillagerGPT
-import tj.horner.villagergpt.conversation.VillagerConversation
-import tj.horner.villagergpt.conversation.VillagerConversationManager
+import io.github.enpici.villager.gpt.MetadataKey
+import io.github.enpici.villager.gpt.VillagerGPT
+import io.github.enpici.villager.gpt.conversation.VillagerConversation
+import io.github.enpici.villager.gpt.conversation.VillagerConversationManager
 
 class CommandFlowMockBukkitTest {
     private lateinit var server: ServerMock

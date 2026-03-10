@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.config
+package io.github.enpici.villager.gpt.config
 
 import io.mockk.every
 import io.mockk.mockk

@@ -3,9 +3,9 @@ package io.github.enpici.villager.life.integration;
 import io.github.enpici.villager.life.agent.AgentManager;
 import io.github.enpici.villager.life.agent.NeedType;
 import io.github.enpici.villager.life.village.VillageManager;
-import tj.horner.villagergpt.api.DefaultVillagerContext;
-import tj.horner.villagergpt.api.VillagerContext;
-import tj.horner.villagergpt.api.VillagerContextProvider;
+import io.github.enpici.villager.api.DefaultVillagerContext;
+import io.github.enpici.villager.api.VillagerContext;
+import io.github.enpici.villager.api.VillagerContextProvider;
 import org.bukkit.entity.Villager;
 
 import java.util.List;

@@ -72,7 +72,7 @@ Responsabilidades del parent:
 
 ### Estado transitorio (aplicado)
 
-- API extraída a módulo `villager-api` manteniendo namespace legacy (`tj.horner.villagergpt.api`) para minimizar ruptura.
+- API extraída a módulo `villager-api` manteniendo namespace legacy (`io.github.enpici.villager.api`) para minimizar ruptura.
 
 ### Estado objetivo (recomendado)
 

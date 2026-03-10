@@ -1,12 +1,12 @@
-package tj.horner.villagergpt.tasks
+package io.github.enpici.villager.gpt.tasks
 
 import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
 import org.bukkit.entity.Entity
 import org.bukkit.scheduler.BukkitRunnable
-import tj.horner.villagergpt.VillagerGPT
-import tj.horner.villagergpt.conversation.VillagerConversation
+import io.github.enpici.villager.gpt.VillagerGPT
+import io.github.enpici.villager.gpt.conversation.VillagerConversation
 
 @OptIn(BetaOpenAI::class)
 class EnvironmentWatcher(private val plugin: VillagerGPT) : BukkitRunnable() {

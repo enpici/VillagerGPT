@@ -1,6 +1,6 @@
-package tj.horner.villagergpt.conversation.pipeline
+package io.github.enpici.villager.gpt.conversation.pipeline
 
-import tj.horner.villagergpt.conversation.VillagerConversation
+import io.github.enpici.villager.gpt.conversation.VillagerConversation
 
 interface ConversationMessageProcessor {
     fun processMessage(message: String, conversation: VillagerConversation): Collection<ConversationMessageAction>?

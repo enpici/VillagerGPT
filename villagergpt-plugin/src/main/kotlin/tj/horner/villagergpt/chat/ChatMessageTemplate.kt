@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.chat
+package io.github.enpici.villager.gpt.chat
 
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor

@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.conversation
+package io.github.enpici.villager.gpt.conversation
 
 import kotlin.random.Random
 

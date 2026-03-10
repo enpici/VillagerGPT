@@ -1,8 +1,8 @@
-package tj.horner.villagergpt.events
+package io.github.enpici.villager.gpt.events
 
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
-import tj.horner.villagergpt.conversation.VillagerConversation
+import io.github.enpici.villager.gpt.conversation.VillagerConversation
 
 class VillagerConversationStartEvent(val conversation: VillagerConversation) : Event() {
     companion object {

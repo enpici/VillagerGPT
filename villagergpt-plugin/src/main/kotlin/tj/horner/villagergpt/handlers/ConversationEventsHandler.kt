@@ -1,4 +1,4 @@
-package tj.horner.villagergpt.handlers
+package io.github.enpici.villager.gpt.handlers
 
 import com.aallam.openai.api.BetaOpenAI
 import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
@@ -13,17 +13,17 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.event.player.PlayerInteractEntityEvent
-import tj.horner.villagergpt.MetadataKey
-import tj.horner.villagergpt.VillagerGPT
-import tj.horner.villagergpt.chat.ChatMessageTemplate
-import tj.horner.villagergpt.conversation.VillagerConversation
-import tj.horner.villagergpt.conversation.formatting.MessageFormatter
-import tj.horner.villagergpt.conversation.pipeline.producers.ProviderException
-import tj.horner.villagergpt.events.VillagerConversationEndEvent
-import tj.horner.villagergpt.events.VillagerConversationMessageEvent
-import tj.horner.villagergpt.events.VillagerConversationStartEvent
-import tj.horner.villagergpt.observability.ConversationLogContext
-import tj.horner.villagergpt.observability.logContext
+import io.github.enpici.villager.gpt.MetadataKey
+import io.github.enpici.villager.gpt.VillagerGPT
+import io.github.enpici.villager.gpt.chat.ChatMessageTemplate
+import io.github.enpici.villager.gpt.conversation.VillagerConversation
+import io.github.enpici.villager.gpt.conversation.formatting.MessageFormatter
+import io.github.enpici.villager.gpt.conversation.pipeline.producers.ProviderException
+import io.github.enpici.villager.gpt.events.VillagerConversationEndEvent
+import io.github.enpici.villager.gpt.events.VillagerConversationMessageEvent
+import io.github.enpici.villager.gpt.events.VillagerConversationStartEvent
+import io.github.enpici.villager.gpt.observability.ConversationLogContext
+import io.github.enpici.villager.gpt.observability.logContext
 
 class ConversationEventsHandler(private val plugin: VillagerGPT) : Listener {
     private companion object {
