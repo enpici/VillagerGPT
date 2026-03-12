@@ -151,6 +151,27 @@ conversation messages.
 - `/ttvclear`: Clear the current villager conversation
 - `/ttvend`: End the current villager conversation
 
+## VillagerLife: generar aldeanos y arrancar la simulación
+
+Si lo que quieres es **crear aldeanos "agentes" automáticamente** (no solo hablar con aldeanos ya existentes), eso está en el plugin `villagerlife-plugin`.
+
+Pasos rápidos en Paper (como OP o con `villagerlife.admin`):
+
+1. Asegúrate de cargar el JAR de `VillagerLife` en `plugins/`.
+2. Entra al servidor y colócate donde quieres iniciar la aldea.
+3. Ejecuta:
+   ```
+   /villagerlife createvillage
+   ```
+
+Ese comando crea una VillageAI en tu posición y spawnea **2 aldeanos iniciales** (uno `FARMER` y otro `BUILDER`) ya registrados como agentes.
+
+Comandos útiles después de iniciar:
+
+- `/villagerlife status` → estado de la aldea activa.
+- `/villagerlife register` → registra un aldeano cercano como agente.
+- `/villagerlife build <blueprint>` → encola una construcción para los builders.
+
 ## Permissions
 
 The following permissions are available:
