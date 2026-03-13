@@ -177,6 +177,17 @@ integration:
 
 Si Citizens no está instalado (o lo desactivas), el plugin sigue arrancando pero usa comportamiento de fallback para movimiento/pathfinding; con Citizens activo, la navegación de agentes suele ser más robusta.
 
+#### ¿Qué te aporta Citizens hoy en este proyecto?
+
+- Navegación de NPC más estable para tareas de movimiento y construcción.
+- Animación de swing (mano) en acciones como cosecha/build para dar feedback visual.
+- Mapeo `villager -> npcId` para trazabilidad interna del agente.
+
+#### ¿Qué NO te aporta (todavía) Citizens aquí?
+
+- **Inventario avanzado de NPC**: la economía/materiales se maneja por `VillageAI` y stock interno, no por inventario persistente del NPC.
+- **Guardias con IA de combate real**: existe el rol `GUARD`, pero actualmente cae en tareas genéricas (`WanderTask`) y la defensa principal es `FleeTask` cuando hay amenaza.
+
 Comandos útiles después de iniciar:
 
 - `/villagerlife status` → estado de la aldea activa.
