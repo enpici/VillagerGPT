@@ -151,6 +151,70 @@ conversation messages.
 - `/ttvclear`: Clear the current villager conversation
 - `/ttvend`: End the current villager conversation
 
+## VillagerLife: generar aldeanos y arrancar la simulación
+
+Si lo que quieres es **crear aldeanos "agentes" automáticamente** (no solo hablar con aldeanos ya existentes), eso está en el plugin `villagerlife-plugin`.
+
+Pasos rápidos en Paper (como OP o con `villagerlife.admin`):
+
+1. Asegúrate de cargar el JAR de `VillagerLife` en `plugins/`.
+2. Entra al servidor y colócate donde quieres iniciar la aldea.
+3. Ejecuta:
+   ```
+   /villagerlife createvillage
+   ```
+
+Ese comando crea una VillageAI en tu posición y spawnea **2 aldeanos iniciales** (uno `FARMER` y otro `BUILDER`) ya registrados como agentes.
+
+### ¿Depende de Citizens?
+
+**No es obligatorio.** `VillagerLife` funciona sin Citizens, porque la integración es opcional (`softdepend`) y además se puede activar/desactivar por config con:
+
+```yaml
+integration:
+  citizens-enabled: true
+```
+
+Si Citizens no está instalado (o lo desactivas), el plugin sigue arrancando pero usa comportamiento de fallback para movimiento/pathfinding; con Citizens activo, la navegación de agentes suele ser más robusta.
+
+#### ¿Qué te aporta Citizens hoy en este proyecto?
+
+- Navegación de NPC más estable para tareas de movimiento y construcción.
+- Animación de swing (mano) en acciones como cosecha/build para dar feedback visual.
+- Mapeo `villager -> npcId` para trazabilidad interna del agente.
+
+#### ¿Qué NO te aporta (todavía) Citizens aquí?
+
+- **Inventario avanzado de NPC**: la economía/materiales se maneja por `VillageAI` y stock interno, no por inventario persistente del NPC.
+- **Guardias con IA de combate real**: existe el rol `GUARD`, pero actualmente cae en tareas genéricas (`WanderTask`) y la defensa principal es `FleeTask` cuando hay amenaza.
+- **Sistema de quests/misiones**: actualmente no hay módulo de quests integrado en `VillagerLife`.
+
+#### ¿Conviene hacerlo dependencia fuerte de Citizens?
+
+Depende de tu objetivo:
+
+- Si quieres **NPC behavior avanzado** (rutas complejas, control fino de navegación y futuras features tipo escoltas/guardias), convertirlo en dependencia fuerte puede simplificar roadmap.
+- Si priorizas **compatibilidad y adopción** (servidores sin Citizens), mantener `softdepend` + fallback es más seguro para producción.
+
+Recomendación práctica: mantener integración opcional ahora y definir un perfil "enhanced" (con Citizens) para features premium como quests/guardias reales; así no rompes instalaciones actuales.
+
+#### ¿Qué plugin de quests usar con Citizens?
+
+Sí, seguramente te suena **BetonQuest** (muy usado con Citizens para NPC + diálogos + condiciones) y también **Quests** (PikaMug) como alternativa más simple de operar.
+
+Guía rápida de elección:
+
+- **BetonQuest**: más potente/flexible, ideal si quieres flujos complejos (ramas, condiciones, eventos encadenados).
+- **Quests**: más directo para montar misiones clásicas sin tanta curva de aprendizaje.
+
+Si vas en serio con guardias/quests narrativas, el combo típico suele ser: `Citizens + plugin de quests (+ MythicMobs si quieres combate/eventos más avanzados)`.
+
+Comandos útiles después de iniciar:
+
+- `/villagerlife status` → estado de la aldea activa.
+- `/villagerlife register` → registra un aldeano cercano como agente.
+- `/villagerlife build <blueprint>` → encola una construcción para los builders.
+
 ## Permissions
 
 The following permissions are available:
