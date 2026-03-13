@@ -11,6 +11,17 @@ import org.bukkit.Bukkit;
 public class DecisionEngine {
 
     public Task decide(Agent agent, VillageAI village) {
+        if (agent.role() == AgentRole.GUARD) {
+            var villager = Bukkit.getServer() != null ? agent.resolveVillager() : null;
+            if (village.threatDetected()) {
+                return new InterceptThreatTask();
+            }
+            if (villager != null && villager.getLocation().distanceSquared(village.center()) > 36) {
+                return new ReturnToPostTask();
+            }
+            return new PatrolTask();
+        }
+
         double eat = agent.needLevel(NeedType.HUNGER) * 1.4;
         double sleep = agent.needLevel(NeedType.ENERGY) * 1.2;
         double flee = village.threatDetected() ? 95 : agent.needLevel(NeedType.SAFETY);
@@ -26,7 +37,6 @@ public class DecisionEngine {
         return switch (agent.role()) {
             case FARMER -> new HarvestTask();
             case BUILDER -> !village.pendingMaterials().isEmpty() ? new DepositItemsTask() : new WanderTask();
-            case GUARD -> new WanderTask();
             default -> new WanderTask();
         };
     }
