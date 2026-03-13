@@ -14,8 +14,10 @@ import org.bukkit.entity.Villager;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,6 +43,7 @@ public class VillageAI {
     private long lastThreatTick = -10_000L;
     private long lastReproductionTick = -10_000L;
     private Map<Material, Integer> pendingMaterials = Map.of();
+    private final Map<String, ThreatSignal> activeThreatSignals = new ConcurrentHashMap<>();
 
     public VillageAI(UUID id, String name, Location center, AgentManager agentManager, BlueprintService blueprintService) {
         this.id = id;
@@ -62,7 +65,17 @@ public class VillageAI {
     public int foodStock() { return foodStock; }
     public int bedCount() { return bedCount; }
     public int populationTarget() { return populationTarget; }
-    public boolean threatDetected() { return Bukkit.getCurrentTick() - lastThreatTick < 200L; }
+    public boolean threatDetected() {
+        pruneThreatSignals();
+        return !activeThreatSignals.isEmpty() || currentTick() - lastThreatTick < 200L;
+    }
+
+    public Optional<Location> activeThreatLocation() {
+        pruneThreatSignals();
+        return activeThreatSignals.values().stream()
+                .findFirst()
+                .map(signal -> signal.location().clone());
+    }
 
     public synchronized void addFoodStock(int amount) {
         foodStock = Math.max(0, foodStock + amount);
@@ -164,15 +177,43 @@ public class VillageAI {
         if (foodStock < Math.max(8, population() * 2)) return false;
         if (bedCount < population() + 1) return false;
         if (threatDetected()) return false;
-        return Bukkit.getCurrentTick() - lastReproductionTick > 1_200L;
+        return currentTick() - lastReproductionTick > 1_200L;
     }
 
     public void markReproduction() {
-        lastReproductionTick = Bukkit.getCurrentTick();
+        lastReproductionTick = currentTick();
     }
 
     public void markThreat() {
-        lastThreatTick = Bukkit.getCurrentTick();
+        lastThreatTick = currentTick();
+    }
+
+    public void registerThreatSignal(String source, Location location, long ttlTicks) {
+        if (source == null || source.isBlank()) {
+            return;
+        }
+        long now = currentTick();
+        long expiresAt = now + Math.max(1L, ttlTicks);
+        Location threatLocation = location != null ? location.clone() : center.clone();
+        activeThreatSignals.put(source, new ThreatSignal(threatLocation, expiresAt));
+        lastThreatTick = now;
+    }
+
+    public void clearThreatSignal(String source) {
+        if (source == null || source.isBlank()) {
+            return;
+        }
+        activeThreatSignals.remove(source);
+    }
+
+    private void pruneThreatSignals() {
+        long now = currentTick();
+        Iterator<Map.Entry<String, ThreatSignal>> iterator = activeThreatSignals.entrySet().iterator();
+        while (iterator.hasNext()) {
+            if (iterator.next().getValue().expiresAtTick() <= now) {
+                iterator.remove();
+            }
+        }
     }
 
     public Villager tryReproduce() {
@@ -242,4 +283,10 @@ public class VillageAI {
     }
 
     public record MaterialRequest(Material material, int amount) {}
+
+    private long currentTick() {
+        return Bukkit.getServer() != null ? Bukkit.getCurrentTick() : 0L;
+    }
+
+    private record ThreatSignal(Location location, long expiresAtTick) {}
 }

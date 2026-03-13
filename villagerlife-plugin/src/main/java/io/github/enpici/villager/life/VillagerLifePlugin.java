@@ -8,6 +8,7 @@ import io.github.enpici.villager.life.command.VillagerLifeCommand;
 import io.github.enpici.villager.life.integration.CitizensAdapter;
 import io.github.enpici.villager.life.integration.CitizensGateway;
 import io.github.enpici.villager.life.integration.VillagerLifeContextProvider;
+import io.github.enpici.villager.life.listener.ThreatSignalListener;
 import io.github.enpici.villager.life.scheduler.SimulationScheduler;
 import io.github.enpici.villager.life.village.VillageManager;
 import org.bukkit.plugin.ServicePriority;
@@ -54,6 +55,8 @@ public final class VillagerLifePlugin extends JavaPlugin {
             pluginCommand.setExecutor(command);
             pluginCommand.setTabCompleter(command);
         }
+
+        getServer().getPluginManager().registerEvents(new ThreatSignalListener(villageManager, agentManager), this);
 
         simulationScheduler.start();
         getLogger().info("VillagerLife enabled. MVP skeleton activo.");
