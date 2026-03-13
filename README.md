@@ -187,6 +187,16 @@ Si Citizens no está instalado (o lo desactivas), el plugin sigue arrancando per
 
 - **Inventario avanzado de NPC**: la economía/materiales se maneja por `VillageAI` y stock interno, no por inventario persistente del NPC.
 - **Guardias con IA de combate real**: existe el rol `GUARD`, pero actualmente cae en tareas genéricas (`WanderTask`) y la defensa principal es `FleeTask` cuando hay amenaza.
+- **Sistema de quests/misiones**: actualmente no hay módulo de quests integrado en `VillagerLife`.
+
+#### ¿Conviene hacerlo dependencia fuerte de Citizens?
+
+Depende de tu objetivo:
+
+- Si quieres **NPC behavior avanzado** (rutas complejas, control fino de navegación y futuras features tipo escoltas/guardias), convertirlo en dependencia fuerte puede simplificar roadmap.
+- Si priorizas **compatibilidad y adopción** (servidores sin Citizens), mantener `softdepend` + fallback es más seguro para producción.
+
+Recomendación práctica: mantener integración opcional ahora y definir un perfil "enhanced" (con Citizens) para features premium como quests/guardias reales; así no rompes instalaciones actuales.
 
 Comandos útiles después de iniciar:
 
