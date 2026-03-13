@@ -166,6 +166,17 @@ Pasos rápidos en Paper (como OP o con `villagerlife.admin`):
 
 Ese comando crea una VillageAI en tu posición y spawnea **2 aldeanos iniciales** (uno `FARMER` y otro `BUILDER`) ya registrados como agentes.
 
+### ¿Depende de Citizens?
+
+**No es obligatorio.** `VillagerLife` funciona sin Citizens, porque la integración es opcional (`softdepend`) y además se puede activar/desactivar por config con:
+
+```yaml
+integration:
+  citizens-enabled: true
+```
+
+Si Citizens no está instalado (o lo desactivas), el plugin sigue arrancando pero usa comportamiento de fallback para movimiento/pathfinding; con Citizens activo, la navegación de agentes suele ser más robusta.
+
 Comandos útiles después de iniciar:
 
 - `/villagerlife status` → estado de la aldea activa.
