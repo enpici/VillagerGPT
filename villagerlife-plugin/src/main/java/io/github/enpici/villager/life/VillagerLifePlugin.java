@@ -6,6 +6,7 @@ import io.github.enpici.villager.life.blueprint.BuildTelemetry;
 import io.github.enpici.villager.life.blueprint.BlueprintService;
 import io.github.enpici.villager.life.command.VillagerLifeCommand;
 import io.github.enpici.villager.life.integration.CitizensAdapter;
+import io.github.enpici.villager.life.persistence.SimulationStatePersistence;
 import io.github.enpici.villager.life.integration.CitizensGateway;
 import io.github.enpici.villager.life.integration.VillagerLifeContextProvider;
 import io.github.enpici.villager.life.scheduler.SimulationScheduler;
@@ -26,6 +27,7 @@ public final class VillagerLifePlugin extends JavaPlugin {
     private VillagerLifeContextProvider contextProvider;
     private CitizensGateway citizensAdapter;
     private boolean citizensIntegrationEnabled;
+    private SimulationStatePersistence statePersistence;
 
     @Override
     public void onEnable() {
@@ -44,6 +46,10 @@ public final class VillagerLifePlugin extends JavaPlugin {
 
         var decisionEngine = new DecisionEngine();
         this.simulationScheduler = new SimulationScheduler(this, agentManager, villageManager, decisionEngine);
+        this.statePersistence = new SimulationStatePersistence(this, agentManager, villageManager, blueprintService, simulationScheduler);
+        this.agentManager.setPersistenceListener(statePersistence);
+        this.villageManager.setPersistenceListener(statePersistence);
+        this.simulationScheduler.setQueueChangeListener(statePersistence::onBuildQueueChanged);
         this.contextProvider = new VillagerLifeContextProvider(agentManager, villageManager);
 
         getServer().getServicesManager().register(VillagerContextProvider.class, contextProvider, this, ServicePriority.High);
@@ -55,6 +61,8 @@ public final class VillagerLifePlugin extends JavaPlugin {
             pluginCommand.setTabCompleter(command);
         }
 
+        statePersistence.load();
+        statePersistence.startBatching();
         simulationScheduler.start();
         getLogger().info("VillagerLife enabled. MVP skeleton activo.");
     }
@@ -63,6 +71,10 @@ public final class VillagerLifePlugin extends JavaPlugin {
     public void onDisable() {
         if (simulationScheduler != null) {
             simulationScheduler.stop();
+        }
+        if (statePersistence != null) {
+            statePersistence.stopBatching();
+            statePersistence.flushNow();
         }
         if (contextProvider != null) {
             getServer().getServicesManager().unregister(VillagerContextProvider.class, contextProvider);

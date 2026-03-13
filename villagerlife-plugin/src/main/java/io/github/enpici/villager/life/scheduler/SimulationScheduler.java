@@ -32,6 +32,7 @@ public class SimulationScheduler {
     private BukkitTask taskTick;
     private BukkitTask decisionTick;
     private BukkitTask villageTick;
+    private Runnable queueChangeListener = () -> {};
 
     public SimulationScheduler(JavaPlugin plugin, AgentManager agentManager, VillageManager villageManager, DecisionEngine decisionEngine) {
         this.plugin = plugin;
@@ -50,6 +51,46 @@ public class SimulationScheduler {
         if (taskTick != null) taskTick.cancel();
         if (decisionTick != null) decisionTick.cancel();
         if (villageTick != null) villageTick.cancel();
+    }
+
+    public void setQueueChangeListener(Runnable queueChangeListener) {
+        this.queueChangeListener = queueChangeListener == null ? () -> {} : queueChangeListener;
+    }
+
+    public BuildQueueSnapshot snapshotQueues() {
+        List<String> quick = quickBuildQueue.stream().map(item -> item.blueprintId).toList();
+        List<String> lng = longBuildQueue.stream().map(item -> item.blueprintId).toList();
+        VillageAI village = villageManager.currentVillage().orElse(null);
+        List<VillageAI.MaterialRequest> pendingMaterials = village == null ? List.of() : village.pendingMaterialRequestsSnapshot();
+        return new BuildQueueSnapshot(quick, lng, pendingMaterials);
+    }
+
+    public void restoreQueues(List<String> quick, List<String> lng, List<VillageAI.MaterialRequest> pendingMaterials) {
+        quickBuildQueue.clear();
+        longBuildQueue.clear();
+        if (quick != null) {
+            quick.forEach(id -> quickBuildQueue.offer(new BuildQueueItem(id, villageManager.currentVillage().map(v -> v.blueprintService().isCriticalBuild(id)).orElse(false))));
+        }
+        if (lng != null) {
+            lng.forEach(id -> longBuildQueue.offer(new BuildQueueItem(id, villageManager.currentVillage().map(v -> v.blueprintService().isCriticalBuild(id)).orElse(false))));
+        }
+        VillageAI village = villageManager.currentVillage().orElse(null);
+        if (village != null && pendingMaterials != null && !pendingMaterials.isEmpty()) {
+            village.setStateForRestore(
+                    village.foodStock(),
+                    village.bedCount(),
+                    village.populationTarget(),
+                    village.maxPopulation(),
+                    village.lastThreatTick(),
+                    village.lastReproductionTick(),
+                    village.materialStockSnapshot(),
+                    village.reservedMaterialsSnapshot(),
+                    village.pendingMaterials(),
+                    village.pendingQuickBlueprintsSnapshot(),
+                    village.pendingLongBlueprintsSnapshot(),
+                    pendingMaterials
+            );
+        }
     }
 
     private void tickActiveTasks() {
@@ -98,9 +139,11 @@ public class SimulationScheduler {
         String blueprintId;
         while ((blueprintId = village.pollPendingQuickBlueprint()) != null) {
             quickBuildQueue.offer(new BuildQueueItem(blueprintId, village.blueprintService().isCriticalBuild(blueprintId)));
+            queueChangeListener.run();
         }
         while ((blueprintId = village.pollPendingLongBlueprint()) != null) {
             longBuildQueue.offer(new BuildQueueItem(blueprintId, village.blueprintService().isCriticalBuild(blueprintId)));
+            queueChangeListener.run();
         }
     }
 
@@ -129,8 +172,10 @@ public class SimulationScheduler {
             if (next.finished) {
                 if (!quickBuildQueue.isEmpty() && quickBuildQueue.peekFirst() == next) {
                     quickBuildQueue.pollFirst();
+                    queueChangeListener.run();
                 } else if (!longBuildQueue.isEmpty() && longBuildQueue.peekFirst() == next) {
                     longBuildQueue.pollFirst();
+                    queueChangeListener.run();
                 }
             }
         }
@@ -238,6 +283,11 @@ public class SimulationScheduler {
         service.rollbackMaterials(item.plan != null ? item.plan.consumedItems() : List.of());
         item.finished = true;
         return 1;
+    }
+
+    public record BuildQueueSnapshot(List<String> quickBlueprints,
+                                     List<String> longBlueprints,
+                                     List<VillageAI.MaterialRequest> pendingMaterials) {
     }
 
     private static final class BuildQueueItem {

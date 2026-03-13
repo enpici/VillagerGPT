@@ -26,3 +26,7 @@ build:
     ticks-per-block: 5
 integration:
   citizens-enabled: true
+
+
+persistence:
+  batch-interval-ticks: 100

@@ -3,6 +3,7 @@ package io.github.enpici.villager.life.agent;
 import io.github.enpici.villager.life.role.AgentRole;
 import io.github.enpici.villager.life.task.Task;
 import io.github.enpici.villager.life.task.TaskStatus;
+import io.github.enpici.villager.life.persistence.PersistenceListener;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
@@ -21,6 +22,7 @@ public class Agent {
     private Task activeTask;
     private String lastEvent = "spawned";
     private Integer npcId;
+    private PersistenceListener persistenceListener = PersistenceListener.NO_OP;
 
     public Agent(UUID villagerUuid, AgentRole role) {
         this.villagerUuid = villagerUuid;
@@ -40,6 +42,7 @@ public class Agent {
 
     public void setRole(AgentRole role) {
         this.role = role;
+        persistenceListener.onAgentChanged(this);
     }
 
     public double needLevel(NeedType type) {
@@ -60,6 +63,7 @@ public class Agent {
     public void adjustNeed(NeedType type, double delta) {
         double value = Math.max(0, Math.min(100, needLevel(type) + delta));
         needs.put(type, value);
+        persistenceListener.onAgentChanged(this);
     }
 
     public Task activeTask() {
@@ -68,11 +72,13 @@ public class Agent {
 
     public void assignTask(Task task) {
         this.activeTask = task;
+        persistenceListener.onAgentChanged(this);
     }
 
     public void clearTask(TaskStatus reason) {
         this.activeTask = null;
         this.lastEvent = "task:" + reason.name().toLowerCase();
+        persistenceListener.onAgentChanged(this);
     }
 
     public String lastEvent() {
@@ -81,6 +87,7 @@ public class Agent {
 
     public void setLastEvent(String lastEvent) {
         this.lastEvent = lastEvent;
+        persistenceListener.onAgentChanged(this);
     }
 
     public Integer npcId() {
@@ -89,6 +96,19 @@ public class Agent {
 
     public void setNpcId(Integer npcId) {
         this.npcId = npcId;
+        persistenceListener.onAgentChanged(this);
+    }
+
+    public void setNeedLevel(NeedType type, double value) {
+        needs.put(type, Math.max(0, Math.min(100, value)));
+    }
+
+    public void setActiveTaskForRestore(Task task) {
+        this.activeTask = task;
+    }
+
+    public void setPersistenceListener(PersistenceListener persistenceListener) {
+        this.persistenceListener = persistenceListener == null ? PersistenceListener.NO_OP : persistenceListener;
     }
 
     public Map<UUID, Integer> relationshipsSnapshot() {
