@@ -198,6 +198,17 @@ Depende de tu objetivo:
 
 Recomendación práctica: mantener integración opcional ahora y definir un perfil "enhanced" (con Citizens) para features premium como quests/guardias reales; así no rompes instalaciones actuales.
 
+#### ¿Qué plugin de quests usar con Citizens?
+
+Sí, seguramente te suena **BetonQuest** (muy usado con Citizens para NPC + diálogos + condiciones) y también **Quests** (PikaMug) como alternativa más simple de operar.
+
+Guía rápida de elección:
+
+- **BetonQuest**: más potente/flexible, ideal si quieres flujos complejos (ramas, condiciones, eventos encadenados).
+- **Quests**: más directo para montar misiones clásicas sin tanta curva de aprendizaje.
+
+Si vas en serio con guardias/quests narrativas, el combo típico suele ser: `Citizens + plugin de quests (+ MythicMobs si quieres combate/eventos más avanzados)`.
+
 Comandos útiles después de iniciar:
 
 - `/villagerlife status` → estado de la aldea activa.
