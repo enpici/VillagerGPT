@@ -5,8 +5,13 @@ import io.github.enpici.villager.life.agent.NeedType;
 import io.github.enpici.villager.life.task.BaseTask;
 import io.github.enpici.villager.life.task.TaskStatus;
 import io.github.enpici.villager.life.village.VillageAI;
+import org.bukkit.Location;
+import org.bukkit.entity.Villager;
 
 public class WanderTask extends BaseTask {
+
+    private Location target;
+    private int ticks;
 
     public WanderTask() {
         super("wander", 60L);
@@ -18,8 +23,27 @@ public class WanderTask extends BaseTask {
     }
 
     @Override
+    protected void onStart(Agent agent, VillageAI villageAI) {
+        Villager villager = TaskMovement.villager(agent);
+        Location origin = villager != null ? villager.getLocation() : villageAI.center();
+        target = TaskMovement.randomNearby(origin, 8.0);
+        TaskMovement.moveTo(villager, target, 0.75);
+        ticks = 0;
+        agent.setLastEvent("moving:wander");
+    }
+
+    @Override
     protected TaskStatus onTick(Agent agent, VillageAI villageAI) {
-        agent.adjustNeed(NeedType.SOCIAL, -5);
-        return TaskStatus.SUCCESS;
+        ticks++;
+        Villager villager = TaskMovement.villager(agent);
+        if (ticks % 20 == 0) {
+            TaskMovement.moveTo(villager, target, 0.75);
+        }
+        agent.adjustNeed(NeedType.SOCIAL, -1);
+        if (TaskMovement.reached(villager, target, 3.0) || ticks >= 60) {
+            agent.setLastEvent("role:wandered");
+            return TaskStatus.SUCCESS;
+        }
+        return TaskStatus.RUNNING;
     }
 }

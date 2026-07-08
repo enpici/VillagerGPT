@@ -1,7 +1,7 @@
 package io.github.enpici.villager.life.task;
 
-import be.seeseemelk.mockbukkit.MockBukkit;
-import be.seeseemelk.mockbukkit.ServerMock;
+import org.mockbukkit.mockbukkit.MockBukkit;
+import org.mockbukkit.mockbukkit.ServerMock;
 import io.github.enpici.villager.life.VillagerLifePlugin;
 import io.github.enpici.villager.life.agent.Agent;
 import io.github.enpici.villager.life.agent.AgentManager;

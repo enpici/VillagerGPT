@@ -86,3 +86,8 @@ nb-configuration.xml
 
 build/
 bin
+
+##############################
+## Local test servers
+##############################
+paper-test-server/

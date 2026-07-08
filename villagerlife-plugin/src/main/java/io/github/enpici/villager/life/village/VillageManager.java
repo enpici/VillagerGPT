@@ -16,6 +16,11 @@ public class VillageManager {
         return currentVillage;
     }
 
+    public VillageAI restoreVillage(UUID id, String name, Location center, AgentManager agentManager, BlueprintService blueprintService) {
+        this.currentVillage = new VillageAI(id, name, center, agentManager, blueprintService);
+        return currentVillage;
+    }
+
     public Optional<VillageAI> currentVillage() {
         return Optional.ofNullable(currentVillage);
     }

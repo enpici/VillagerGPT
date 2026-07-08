@@ -2,14 +2,64 @@ simulation:
   decision-interval-ticks: 20
   village-planning-interval-ticks: 200
   task-interval-ticks: 1
+simulation-log:
+  enabled: true
+  console: true
+  file-enabled: true
+  file: simulation-story.log
+  recent-limit: 200
+  stuck-task-ticks: 200
+  missing-agent-prune-ticks: 0
+lifecycle:
+  adult-age-ticks: 24000
 village:
   max-population: 30
-  initial-target-population: 6
-  initial-food-stock: 20
-  initial-bed-count: 2
+  initial-target-population: 8
+  initial-food-stock: 48
+  initial-bed-count: 8
+  initial-roles:
+    - FARMER
+    - BUILDER
+    - MINER
+    - CRAFTER
+    - GUARD
+    - TRADER
+    - LEADER
+  bed-scan-radius: 48
+  resource-scan-radius: 32
+  keep-loaded: true
+  keep-loaded-radius-chunks: 2
 reproduction:
   cooldown-ticks: 1200
   min-food-stock: 8
+  birth-food-cost: 4
+  partner-radius: 12
+persistence:
+  db-path: life.db
+  autosave-interval-ticks: 1200
+ai-planning:
+  enabled: true
+  local-model-url: "http://127.0.0.1:1234/v1/chat/completions"
+  model: "google/gemma-4-e4b"
+  request-timeout-ms: 20000
+  shelter:
+    enabled: true
+    trigger-at-night: true
+    trigger-on-threat: true
+    cooldown-ticks: 6000
+    fallback-width: 5
+    fallback-height: 4
+    fallback-depth: 5
+    fallback-wall-material: OAK_PLANKS
+    fallback-roof-material: OAK_PLANKS
+  agent-decisions:
+    enabled: true
+    cooldown-ticks: 600
+    hold-ticks: 200
+    interrupt-active-task: true
+    min-accepted-priority: 30
+    max-accepted-priority: 88
+    max-concurrent-requests: 1
 build:
   mode: INSTANT
   nearby-container-radius: 16
@@ -26,3 +76,5 @@ build:
     ticks-per-block: 5
 integration:
   citizens-enabled: true
+  citizens-body-type: VILLAGER
+  citizens-auto-spawn-npcs: false

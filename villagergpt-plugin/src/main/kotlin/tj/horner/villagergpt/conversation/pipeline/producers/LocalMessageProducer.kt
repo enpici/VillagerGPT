@@ -9,8 +9,14 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import org.bukkit.configuration.Configuration
 import io.github.enpici.villager.gpt.VillagerGPT
@@ -34,6 +40,9 @@ class LocalMessageProducer(
     }
     private val endpoint = config.getString("local-model-url") ?: "http://localhost:8000/"
     private val sendJson = config.getBoolean("local-model-json", false)
+    private val openAiCompatible = config.getBoolean("local-model-openai-compatible", false)
+    private val model = config.getString("local-model-name") ?: "local-model"
+    private val temperature = config.getDouble("local-model-temperature", 0.7)
     private val providerName = "local"
 
     override suspend fun produceNextMessage(conversation: VillagerConversation): String {
@@ -44,16 +53,21 @@ class LocalMessageProducer(
             execute = {
                 var responseBody = ""
                 val duration = measureTimeMillis {
-                    val response = if (sendJson) {
+                    val response = if (openAiCompatible) {
                         val payload = buildJsonObject {
-                            put("messages", buildJsonArray {
-                                conversation.messages.forEach {
-                                    add(buildJsonObject {
-                                        put("role", it.role.role)
-                                        put("content", it.content)
-                                    })
-                                }
-                            })
+                            put("model", model)
+                            put("temperature", temperature)
+                            put("stream", false)
+                            put("messages", conversationMessagesPayload(conversation))
+                        }
+
+                        client.post(endpoint) {
+                            contentType(ContentType.Application.Json)
+                            setBody(payload.toString())
+                        }
+                    } else if (sendJson) {
+                        val payload = buildJsonObject {
+                            put("messages", conversationMessagesPayload(conversation))
                         }
 
                         client.post(endpoint) {
@@ -65,7 +79,7 @@ class LocalMessageProducer(
                         client.post(endpoint) { setBody(payload) }
                     }
 
-                    responseBody = parseResponse(response)
+                    responseBody = parseResponse(response, openAiCompatible)
                 }
 
                 plugin.providerMetrics.recordLatency(providerName, duration)
@@ -86,7 +100,18 @@ class LocalMessageProducer(
         )
     }
 
-    private suspend fun parseResponse(response: HttpResponse): String {
+    private fun conversationMessagesPayload(conversation: VillagerConversation): JsonElement {
+        return buildJsonArray {
+            conversation.messages.forEach {
+                add(buildJsonObject {
+                    put("role", it.role.role)
+                    put("content", it.content)
+                })
+            }
+        }
+    }
+
+    private suspend fun parseResponse(response: HttpResponse, openAiCompatible: Boolean): String {
         val statusCode = response.status.value
         val body = response.bodyAsText()
 
@@ -94,7 +119,11 @@ class LocalMessageProducer(
             throw LocalProviderHttpException(statusCode, body)
         }
 
-        return body
+        return if (openAiCompatible) {
+            LocalModelResponseParser.openAiChatContent(body)
+        } else {
+            body
+        }
     }
 
     /**
@@ -106,3 +135,23 @@ class LocalMessageProducer(
 }
 
 class LocalProviderHttpException(val statusCode: Int, message: String) : RuntimeException(message)
+
+internal object LocalModelResponseParser {
+    private val json = Json { ignoreUnknownKeys = true }
+
+    fun openAiChatContent(body: String): String {
+        val root = json.parseToJsonElement(body).jsonObject
+        val firstChoice = root["choices"]?.jsonArray?.firstOrNull()?.jsonObject
+            ?: throw LocalProviderHttpException(200, "Local model response did not include choices")
+
+        val content = firstChoice["message"]
+            ?.jsonObject
+            ?.get("content")
+            ?.jsonPrimitive
+            ?.contentOrNull
+            ?: firstChoice["text"]?.jsonPrimitive?.contentOrNull
+
+        return content?.trim()?.takeIf { it.isNotEmpty() }
+            ?: throw LocalProviderHttpException(200, "Local model response did not include message content")
+    }
+}

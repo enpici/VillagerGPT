@@ -9,6 +9,7 @@ import io.github.enpici.villager.life.build.BuildPlan;
 import io.github.enpici.villager.life.event.VillageStructureBuiltEvent;
 import io.github.enpici.villager.life.integration.DefaultWorldEditGateway;
 import io.github.enpici.villager.life.integration.WorldEditGateway;
+import io.github.enpici.villager.life.village.PhysicalResourceScanner;
 import io.github.enpici.villager.life.village.VillageAI;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
@@ -50,6 +51,7 @@ public class BlueprintService {
     private final BuildTelemetry buildTelemetry;
     private final WorldEditGateway worldEditGateway;
     private final Map<String, BlueprintDefinition> blueprints = new ConcurrentHashMap<>();
+    private final Map<String, io.github.enpici.villager.life.build.BuildPlan> dynamicBuildPlans = new ConcurrentHashMap<>();
 
     public BlueprintService(JavaPlugin plugin, BuildTelemetry buildTelemetry, WorldEditGateway worldEditGateway) {
         this.plugin = plugin;
@@ -79,7 +81,11 @@ public class BlueprintService {
     }
 
     public boolean hasBlueprint(String id) {
-        return blueprints.containsKey(id.toLowerCase(Locale.ROOT));
+        if (id == null || id.isBlank()) {
+            return false;
+        }
+        String normalized = id.toLowerCase(Locale.ROOT);
+        return blueprints.containsKey(normalized) || dynamicBuildPlans.containsKey(normalized);
     }
 
     public Optional<BlueprintDefinition> find(String id) {
@@ -96,8 +102,12 @@ public class BlueprintService {
     }
 
     public Optional<io.github.enpici.villager.life.build.BuildPlan> extractBuildPlan(String id, Location origin) {
-        if (origin == null || origin.getWorld() == null) {
+        if (origin == null || origin.getWorld() == null || id == null || id.isBlank()) {
             return Optional.empty();
+        }
+        io.github.enpici.villager.life.build.BuildPlan dynamicPlan = dynamicBuildPlans.get(id.toLowerCase(Locale.ROOT));
+        if (dynamicPlan != null) {
+            return Optional.of(copyPlan(dynamicPlan));
         }
 
         Optional<BlueprintDefinition> definition = find(id);
@@ -206,6 +216,11 @@ public class BlueprintService {
             return Optional.empty();
         }
 
+        io.github.enpici.villager.life.build.BuildPlan dynamicPlan = dynamicBuildPlans.get(id.toLowerCase(Locale.ROOT));
+        if (dynamicPlan != null) {
+            return prepareDynamicBuildPlan(id.toLowerCase(Locale.ROOT), dynamicPlan, village);
+        }
+
         Optional<BlueprintDefinition> definitionOpt = find(id);
         if (definitionOpt.isEmpty()) {
             plugin.getLogger().warning("Build cancelado: blueprint no encontrado: " + id);
@@ -262,12 +277,18 @@ public class BlueprintService {
     }
 
     public boolean isLongBuild(String blueprintId) {
+        if (blueprintId != null && dynamicBuildPlans.containsKey(blueprintId.toLowerCase(Locale.ROOT))) {
+            return false;
+        }
         return find(blueprintId)
                 .map(def -> def.tags().contains("long") || def.tags().contains("large") || def.type() == BuildingType.DEFENSIVE)
                 .orElse(false);
     }
 
     public boolean isCriticalBuild(String blueprintId) {
+        if (blueprintId != null && dynamicBuildPlans.containsKey(blueprintId.toLowerCase(Locale.ROOT))) {
+            return true;
+        }
         return find(blueprintId)
                 .map(def -> def.tags().contains("critical"))
                 .orElse(false);
@@ -575,6 +596,55 @@ public class BlueprintService {
 
     public BuildTelemetry telemetry() {
         return buildTelemetry;
+    }
+
+    public void registerDynamicBuildPlan(String id, io.github.enpici.villager.life.build.BuildPlan plan) {
+        if (id == null || id.isBlank() || plan == null || plan.size() == 0) {
+            return;
+        }
+        dynamicBuildPlans.put(id.toLowerCase(Locale.ROOT), copyPlan(plan));
+    }
+
+    public boolean isDynamicBlueprint(String id) {
+        return id != null && dynamicBuildPlans.containsKey(id.toLowerCase(Locale.ROOT));
+    }
+
+    private Optional<BuildPlan> prepareDynamicBuildPlan(String id, io.github.enpici.villager.life.build.BuildPlan plan, VillageAI village) {
+        Map<Material, Integer> missing = village.resourceService().calculateMissingMaterials(plan);
+        if (!missing.isEmpty()) {
+            village.setPendingMaterials(missing);
+            village.enqueueMaterialRequests(missing);
+            plugin.getLogger().info("Build dinamico '" + id + "' espera materiales: " + missing);
+            return Optional.empty();
+        }
+
+        PhysicalResourceScanner scanner = new PhysicalResourceScanner();
+        Map<Material, Integer> required = new HashMap<>();
+        for (BlockPlacementStep step : plan.steps()) {
+            required.merge(step.material(), 1, Integer::sum);
+        }
+        int radius = Math.max(1, plugin.getConfig().getInt("village.resource-scan-radius",
+                plugin.getConfig().getInt("build.nearby-container-radius", 24)));
+        for (Map.Entry<Material, Integer> entry : required.entrySet()) {
+            if (!scanner.consumeMaterial(village, village.agentManager().all(), null, entry.getKey(), entry.getValue(), radius)) {
+                plugin.getLogger().warning("Build dinamico '" + id + "' no pudo consumir " + entry.getKey());
+                return Optional.empty();
+            }
+        }
+
+        ArrayDeque<BuildStep> steps = new ArrayDeque<>();
+        for (BlockPlacementStep step : copyPlan(plan).steps()) {
+            steps.add(new BuildStep(step.position(), step.material(), null));
+        }
+        return Optional.of(new BuildPlan(id, BuildingType.DEFENSIVE, Set.of("dynamic", "ai", "shelter", "critical"), steps, List.of()));
+    }
+
+    private io.github.enpici.villager.life.build.BuildPlan copyPlan(io.github.enpici.villager.life.build.BuildPlan plan) {
+        List<BlockPlacementStep> steps = new ArrayList<>();
+        for (BlockPlacementStep step : plan.steps()) {
+            steps.add(new BlockPlacementStep(step.material(), step.position(), step.prerequisiteIndices()));
+        }
+        return new io.github.enpici.villager.life.build.BuildPlan(steps);
     }
 
     private long elapsed(long startedAt) {

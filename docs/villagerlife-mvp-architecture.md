@@ -1,4 +1,4 @@
-# VillagerLife MVP Architecture (Paper + Java 21)
+# VillagerLife MVP Architecture (Paper + Java 25)
 
 ## 1) Árbol de paquetes recomendado
 

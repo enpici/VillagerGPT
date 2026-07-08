@@ -5,7 +5,7 @@ Guía operativa para instalar, configurar, respaldar y recuperar VillagerGPT en 
 ## 1) Instalación en Paper
 
 ### Prerrequisitos
-- Java 21 instalado en el host.
+- Java 25 instalado en el host.
 - Servidor Paper funcionando (directorio raíz con `plugins/`, `logs/`, `paper.jar`, etc.).
 - JAR de VillagerGPT compilado o descargado (por ejemplo `VillagerGPT-<version>.jar`).
 

@@ -17,6 +17,15 @@ interface VillagerContext {
     val villagePendingMaterials: Map<String, Int>
     val recentEvents: List<String>
     val relationshipsWithPlayers: Map<UUID, Int>
+    val lifeStage: String?
+    val generation: Int?
+    val partnerUuid: UUID?
+    val parentUuids: List<UUID>
+    val activeTask: String?
+    val lastDecisionReason: String?
+    val currentGoal: String?
+    val currentGoalReason: String?
+    val currentGoalPriority: Int?
 }
 
 data class DefaultVillagerContext(
@@ -32,5 +41,14 @@ data class DefaultVillagerContext(
     override val villageFoodStock: Int? = null,
     override val villagePendingMaterials: Map<String, Int> = emptyMap(),
     override val recentEvents: List<String> = emptyList(),
-    override val relationshipsWithPlayers: Map<UUID, Int> = emptyMap()
+    override val relationshipsWithPlayers: Map<UUID, Int> = emptyMap(),
+    override val lifeStage: String? = null,
+    override val generation: Int? = null,
+    override val partnerUuid: UUID? = null,
+    override val parentUuids: List<UUID> = emptyList(),
+    override val activeTask: String? = null,
+    override val lastDecisionReason: String? = null,
+    override val currentGoal: String? = null,
+    override val currentGoalReason: String? = null,
+    override val currentGoalPriority: Int? = null
 ) : VillagerContext

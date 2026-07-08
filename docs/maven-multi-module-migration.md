@@ -55,7 +55,7 @@ villager-suite-parent/
 Responsabilidades del parent:
 
 - versionado global del suite
-- Java 21 y encoding
+- Java 25 y encoding
 - `dependencyManagement`
 - `pluginManagement`
 - definición de módulos

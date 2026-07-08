@@ -107,7 +107,7 @@ public class BuildStructureTask extends BaseTask {
         return switch (state) {
             case MOVE_TO_NEXT_BLOCK -> tickMoveToNextBlock(agent, step);
             case PLACE_BLOCK -> tickPlaceBlock(agent, villageAI, step);
-            case VERIFY_PLACEMENT -> tickVerifyPlacement(step, villageAI);
+            case VERIFY_PLACEMENT -> tickVerifyPlacement(agent, step, villageAI);
             case PREPARE_PLAN -> TaskStatus.RUNNING;
             case FAILED -> TaskStatus.FAILED;
         };
@@ -177,9 +177,9 @@ public class BuildStructureTask extends BaseTask {
         return TaskStatus.RUNNING;
     }
 
-    private TaskStatus tickVerifyPlacement(BlockPlacementStep step, VillageAI villageAI) {
+    private TaskStatus tickVerifyPlacement(Agent agent, BlockPlacementStep step, VillageAI villageAI) {
         if (step.position().getBlock().getType() == step.material()) {
-            if (!villageAI.resourceService().consumeForStep(step)) {
+            if (!villageAI.resourceService().consumeForStep(step, agent)) {
                 executor.skipCurrent("Sin reserva de material para consumir");
                 failedBlocks++;
                 state = TaskState.MOVE_TO_NEXT_BLOCK;

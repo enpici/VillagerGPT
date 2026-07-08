@@ -9,6 +9,7 @@ import io.github.enpici.villager.api.VillagerContextProvider;
 import org.bukkit.entity.Villager;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public class VillagerLifeContextProvider implements VillagerContextProvider {
 
@@ -40,7 +41,16 @@ public class VillagerLifeContextProvider implements VillagerContextProvider {
                         .collect(java.util.stream.Collectors.toMap(entry -> entry.getKey().name().toLowerCase(), java.util.Map.Entry::getValue))
                         : java.util.Map.of(),
                 agent != null ? List.of(agent.lastEvent()) : List.of(),
-                agent != null ? agent.relationshipsSnapshot() : java.util.Map.of()
+                agent != null ? agent.relationshipsSnapshot() : java.util.Map.of(),
+                agent != null ? agent.lifeStage().name() : null,
+                agent != null ? agent.generation() : null,
+                agent != null ? agent.partner() : null,
+                agent != null ? Stream.of(agent.parentA(), agent.parentB()).filter(java.util.Objects::nonNull).toList() : List.of(),
+                agent != null && agent.activeTask() != null ? agent.activeTask().id() : null,
+                agent != null ? agent.lastDecisionReason() : null,
+                agent != null ? agent.currentGoal().name() : null,
+                agent != null ? agent.currentGoalReason() : null,
+                agent != null ? agent.currentGoalPriority() : null
         );
     }
 }

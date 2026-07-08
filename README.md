@@ -8,10 +8,10 @@ AI villagers are aware of various aspects of the game world, their reputation wi
 
 ## Requirements
 
-- **JDK 21** (exact version target for compilation and runtime)
+- **JDK 25** (exact version target for compilation and runtime)
 - Maven 3.9+ (`mvn`)
 
-CI should provide Java 21 through runner configuration (for example, GitHub Actions `actions/setup-java`).
+CI should provide Java 25 through runner configuration (for example, GitHub Actions `actions/setup-java`).
 
 ## Build
 

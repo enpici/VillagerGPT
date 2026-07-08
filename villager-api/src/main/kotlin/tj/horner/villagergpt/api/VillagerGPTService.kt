@@ -8,6 +8,7 @@ fun interface VillagerDialogueAction {
 }
 
 interface VillagerGPTService {
+    fun setContextProvider(provider: VillagerContextProvider?)
     fun startConversation(player: Player, villager: Villager): Boolean
     suspend fun generateDialogue(villager: Villager, player: Player, message: String): Iterable<VillagerDialogueAction>
     fun notifyEvent(villager: Villager, eventDescription: String)

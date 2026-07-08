@@ -1,6 +1,7 @@
 package io.github.enpici.villager.life.village;
 
 import io.github.enpici.villager.life.VillagerLifePlugin;
+import io.github.enpici.villager.life.agent.Agent;
 import io.github.enpici.villager.life.build.BlockPlacementStep;
 import io.github.enpici.villager.life.build.BuildPlan;
 import org.bukkit.Material;
@@ -15,6 +16,7 @@ public class ResourceService {
 
     private final VillageAI village;
     private final Map<Material, List<Material>> substitutions;
+    private final PhysicalResourceScanner physicalResourceScanner = new PhysicalResourceScanner();
 
     public ResourceService(VillageAI village, Map<Material, List<Material>> substitutions) {
         this.village = village;
@@ -63,17 +65,29 @@ public class ResourceService {
         return true;
     }
 
-    public boolean consumeForStep(BlockPlacementStep step) {
+    public boolean consumeForStep(BlockPlacementStep step, Agent builder) {
         Material exact = step.material();
-        if (village.consumeReservedMaterial(exact, 1)) {
+        if (consumeReservedAndPhysical(exact, builder)) {
             return true;
         }
         for (Material substitute : substitutions.getOrDefault(exact, List.of())) {
-            if (village.consumeReservedMaterial(substitute, 1)) {
+            if (consumeReservedAndPhysical(substitute, builder)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private boolean consumeReservedAndPhysical(Material material, Agent builder) {
+        if (village.center().getWorld() == null) {
+            return village.consumeReservedMaterial(material, 1);
+        }
+        int radius = resourceScanRadius();
+        if (!physicalResourceScanner.consumeMaterial(village, village.agentManager().all(), builder, material, 1, radius)) {
+            return false;
+        }
+        village.releaseReservedMaterial(material, 1);
+        return true;
     }
 
     public void releaseUnconsumed(BuildPlan plan, int startIndex) {
@@ -127,5 +141,14 @@ public class ResourceService {
             }
         }
         return null;
+    }
+
+    private int resourceScanRadius() {
+        VillagerLifePlugin plugin = VillagerLifePlugin.instance();
+        if (plugin == null) {
+            return 24;
+        }
+        return Math.max(1, plugin.getConfig().getInt("village.resource-scan-radius",
+                plugin.getConfig().getInt("build.nearby-container-radius", 24)));
     }
 }

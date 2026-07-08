@@ -1,7 +1,7 @@
 package io.github.enpici.villager.life.blueprint;
 
-import be.seeseemelk.mockbukkit.MockBukkit;
-import be.seeseemelk.mockbukkit.ServerMock;
+import org.mockbukkit.mockbukkit.MockBukkit;
+import org.mockbukkit.mockbukkit.ServerMock;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import io.github.enpici.villager.life.agent.AgentManager;
 import io.github.enpici.villager.life.integration.WorldEditGateway;

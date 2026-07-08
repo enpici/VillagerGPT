@@ -1,13 +1,14 @@
 name: VillagerLife
 version: ${project.version}
 main: io.github.enpici.villager.life.VillagerLifePlugin
-api-version: '1.21'
+api-version: '26.1.2'
 description: Villager autonomous simulation plugin for the Villager suite.
+depend: [VillagerGPT]
 softdepend: [Citizens, WorldEdit]
 commands:
   villagerlife:
     description: Administration command for VillagerLife
-    usage: /villagerlife <createvillage|register|debug|setrole|build|status|buildstatus>
+    usage: /villagerlife <createvillage|register|debug|setrole|build|status|roles|goals|knowledge|family|buildstatus|journal|beds|prune>
     permission: villagerlife.admin
 permissions:
   villagerlife.admin:

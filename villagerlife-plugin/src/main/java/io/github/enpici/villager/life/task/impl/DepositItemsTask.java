@@ -4,7 +4,6 @@ import io.github.enpici.villager.life.agent.Agent;
 import io.github.enpici.villager.life.task.BaseTask;
 import io.github.enpici.villager.life.task.TaskStatus;
 import io.github.enpici.villager.life.village.VillageAI;
-import org.bukkit.Material;
 
 public class DepositItemsTask extends BaseTask {
 
@@ -19,18 +18,23 @@ public class DepositItemsTask extends BaseTask {
 
     @Override
     protected TaskStatus onTick(Agent agent, VillageAI villageAI) {
+        if (WorldItemInteraction.hasCarriedItems(agent)) {
+            TaskStatus deposit = WorldItemInteraction.depositInventoryToNearestContainer(agent, villageAI, 20);
+            if (deposit == TaskStatus.SUCCESS || deposit == TaskStatus.RUNNING) {
+                return deposit;
+            }
+        }
+
+        TaskStatus pickup = WorldItemInteraction.collectNearbyItem(agent, villageAI, 12.0, material -> true);
+        if (pickup == TaskStatus.SUCCESS || pickup == TaskStatus.RUNNING) {
+            return pickup;
+        }
+
         VillageAI.MaterialRequest request = villageAI.pollMaterialRequest();
         if (request != null) {
-            int deposit = Math.max(1, Math.min(4, request.amount()));
-            villageAI.addMaterialStock(request.material(), deposit);
-            int remaining = request.amount() - deposit;
-            if (remaining > 0) {
-                villageAI.requeueMaterialRequest(new VillageAI.MaterialRequest(request.material(), remaining));
-            }
-        } else {
-            villageAI.addMaterialStock(Material.COBBLESTONE, 2);
-            villageAI.addMaterialStock(Material.OAK_PLANKS, 2);
+            villageAI.requeueMaterialRequest(request);
+            agent.setLastEvent("world:no_items_for_request:" + request.material().name().toLowerCase());
         }
-        return TaskStatus.SUCCESS;
+        return TaskStatus.RETRYABLE_FAILED;
     }
 }

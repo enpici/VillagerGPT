@@ -12,9 +12,14 @@ openai-key: ""
 openai-model: "gpt-3.5-turbo"
 
 # URL for your locally hosted model's endpoint.
+# LM Studio default OpenAI-compatible endpoint: "http://localhost:1234/v1/chat/completions"
 local-model-url: "http://localhost:8000/"
 # Send conversation to the local model as JSON instead of plain text
 local-model-json: false
+# Enable this when the local endpoint accepts OpenAI-compatible /v1/chat/completions payloads.
+local-model-openai-compatible: false
+local-model-name: "local-model"
+local-model-temperature: 0.7
 
 # Timeouts, retries and fallback text used by all providers
 provider-settings:

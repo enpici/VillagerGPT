@@ -221,6 +221,15 @@ class VillagerConversation(private val plugin: VillagerGPT, val villager: Villag
         - Village food stock: ${villagerContext.villageFoodStock?.toString() ?: "Unknown"}
         - Pending village materials: ${formatPendingMaterials(villagerContext.villagePendingMaterials)}
         - Current role: ${villagerContext.currentRole ?: villagerInfo?.villagerRole ?: "Unassigned"}
+        - Life stage: ${villagerContext.lifeStage ?: "Unknown"}
+        - Generation: ${villagerContext.generation?.toString() ?: "Unknown"}
+        - Partner UUID: ${villagerContext.partnerUuid?.toString() ?: "None"}
+        - Parent UUIDs: ${formatUuidList(villagerContext.parentUuids)}
+        - Current goal: ${villagerContext.currentGoal ?: "None"}
+        - Goal priority: ${villagerContext.currentGoalPriority?.toString() ?: "Unknown"}
+        - Goal reason: ${villagerContext.currentGoalReason ?: "Unknown"}
+        - Active task: ${villagerContext.activeTask ?: "None"}
+        - Last decision reason: ${villagerContext.lastDecisionReason ?: "Unknown"}
         - Hunger level: ${villagerContext.hungerLevel?.toString() ?: "Unknown"}
         - Energy level: ${villagerContext.energyLevel?.toString() ?: "Unknown"}
         - Recent events:
@@ -247,6 +256,11 @@ ${formatRecentEvents(villagerContext.recentEvents)}
     private fun formatRecentEvents(events: List<String>): String {
         if (events.isEmpty()) return "          - None"
         return events.joinToString("\n") { "          - $it" }
+    }
+
+    private fun formatUuidList(values: List<UUID>): String {
+        if (values.isEmpty()) return "None"
+        return values.joinToString(", ") { it.toString() }
     }
 
     private fun serializeRelationships(relationships: Map<UUID, Int>): String? {

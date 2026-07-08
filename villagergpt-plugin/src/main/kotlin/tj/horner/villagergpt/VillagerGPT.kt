@@ -124,7 +124,7 @@ class VillagerGPT : SuspendingJavaPlugin(), VillagerGPTService {
 
     fun providerName(): String = (config.getString("provider") ?: "openai").lowercase()
 
-    fun setContextProvider(provider: VillagerContextProvider?) {
+    override fun setContextProvider(provider: VillagerContextProvider?) {
         contextProvider = provider
     }
 

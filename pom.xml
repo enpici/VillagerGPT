@@ -16,9 +16,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>21</maven.compiler.release>
-        <kotlin.version>1.9.24</kotlin.version>
-        <paper.version>1.21.11-R0.1-SNAPSHOT</paper.version>
+        <maven.compiler.release>25</maven.compiler.release>
+        <kotlin.version>2.3.0</kotlin.version>
+        <paper.version>26.1.2.build.74-stable</paper.version>
         <mccoroutine.version>2.11.0</mccoroutine.version>
         <openai.version>3.2.1</openai.version>
         <ktor.version>2.2.4</ktor.version>
@@ -26,7 +26,7 @@
         <sqlite.version>3.45.3.0</sqlite.version>
         <junit.version>5.10.2</junit.version>
         <mockk.version>1.13.10</mockk.version>
-        <mockbukkit.version>3.133.2</mockbukkit.version>
+        <mockbukkit.version>4.110.0</mockbukkit.version>
     </properties>
 
     <repositories>
@@ -79,8 +79,8 @@
                 <version>${mockk.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.github.seeseemelk</groupId>
-                <artifactId>MockBukkit-v1.21</artifactId>
+                <groupId>org.mockbukkit.mockbukkit</groupId>
+                <artifactId>mockbukkit-v1.21</artifactId>
                 <version>${mockbukkit.version}</version>
             </dependency>
         </dependencies>

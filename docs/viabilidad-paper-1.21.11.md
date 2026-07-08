@@ -1,5 +1,7 @@
 # Viabilidad de migración a Paper 1.21.11
 
+> Nota 2026-07-07: este spike queda como registro histórico. La línea activa del proyecto ahora apunta a Paper `26.1.2.build.74-stable` y JDK 25.
+
 ## TL;DR
 
 Sí, **la migración es viable**, pero ahora mismo no es “subir versión y listo”.

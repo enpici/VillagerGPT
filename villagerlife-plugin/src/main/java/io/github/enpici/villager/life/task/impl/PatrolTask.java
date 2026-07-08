@@ -1,6 +1,7 @@
 package io.github.enpici.villager.life.task.impl;
 
 import io.github.enpici.villager.life.agent.Agent;
+import io.github.enpici.villager.life.agent.NeedType;
 import io.github.enpici.villager.life.task.BaseTask;
 import io.github.enpici.villager.life.task.TaskStatus;
 import io.github.enpici.villager.life.village.VillageAI;
@@ -9,27 +10,42 @@ import org.bukkit.entity.Villager;
 
 public class PatrolTask extends BaseTask {
 
+    private Location target;
+    private int ticks;
+
     public PatrolTask() {
-        super("patrol", 120L);
+        super("patrol", 100L);
     }
 
     @Override
     public boolean canStart(Agent agent, VillageAI villageAI) {
-        return villageAI.center().getWorld() != null;
+        return agent.isAdult() && villageAI.center().getWorld() != null;
+    }
+
+    @Override
+    protected void onStart(Agent agent, VillageAI villageAI) {
+        Villager villager = TaskMovement.villager(agent);
+        target = villageAI.activeThreatLocation().orElseGet(() -> TaskMovement.randomNearby(villageAI.center(), 14.0));
+        TaskMovement.moveTo(villager, target, 0.9);
+        ticks = 0;
+        agent.setLastEvent("moving:patrol");
     }
 
     @Override
     protected TaskStatus onTick(Agent agent, VillageAI villageAI) {
-        Villager villager = agent.resolveVillager();
-        if (villager == null || !villager.isValid()) {
-            return TaskStatus.FAILED;
+        ticks++;
+        Villager villager = TaskMovement.villager(agent);
+        if (ticks % 20 == 0) {
+            TaskMovement.moveTo(villager, target, 0.9);
         }
-
-        Location center = villageAI.center();
-        double angle = (org.bukkit.Bukkit.getCurrentTick() % 360) * Math.PI / 180.0;
-        Location perimeterPoint = center.clone().add(Math.cos(angle) * 8.0, 0, Math.sin(angle) * 8.0);
-        villager.getPathfinder().moveTo(perimeterPoint);
-
-        return TaskStatus.SUCCESS;
+        agent.adjustNeed(NeedType.SAFETY, -1);
+        if (ticks % 20 == 0) {
+            agent.adjustNeed(NeedType.ENERGY, 1);
+        }
+        if (TaskMovement.reached(villager, target, 4.0) || ticks >= 100) {
+            agent.setLastEvent(villageAI.threatDetected() ? "role:guarded_threat" : "role:patrolled");
+            return TaskStatus.SUCCESS;
+        }
+        return TaskStatus.RUNNING;
     }
 }
